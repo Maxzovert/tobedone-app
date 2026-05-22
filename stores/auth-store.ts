@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { User } from "@/types";
 import { api, loadToken, setToken } from "@/lib/api";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
+import { registerPushWithBackend, unregisterPushToken } from "@/lib/pushRegistration";
 
 interface AuthState {
   user: User | null;
@@ -34,6 +35,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       token: res.data.token,
       isAuthenticated: true,
     });
+    void registerPushWithBackend();
     return null;
   },
 
@@ -51,10 +53,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       token: res.data.token,
       isAuthenticated: true,
     });
+    void registerPushWithBackend();
     return null;
   },
 
   logout: async () => {
+    await unregisterPushToken();
     await setToken(null);
     disconnectSocket();
     set({ user: null, token: null, isAuthenticated: false });

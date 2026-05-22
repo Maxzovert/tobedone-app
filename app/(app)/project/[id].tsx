@@ -26,7 +26,7 @@ import { ProjectIcon } from "@/components/projects/ProjectIcon";
 import { InviteCodeModal } from "@/components/projects/InviteCodeModal";
 import { DiscussionGroupRow } from "@/components/projects/DiscussionGroupRow";
 import { DiscussionIconPicker } from "@/components/projects/DiscussionIconPicker";
-import { ExpandableFAB } from "@/components/ui/ExpandableFAB";
+import { ExpandableFAB, FABMenuItem } from "@/components/ui/ExpandableFAB";
 import { AssignTaskFlowSheet } from "@/components/projects/AssignTaskFlowSheet";
 import { ProjectTasksTab } from "@/components/projects/ProjectTasksTab";
 import { FAB } from "@/components/ui/FAB";
@@ -179,6 +179,34 @@ export default function ProjectDetailScreen() {
 
   const discussionGroups = data?.taskGroups ?? [];
 
+  const discussionFabItems: FABMenuItem[] = [
+    ...(isOwner
+      ? [
+          {
+            id: "create_group",
+            label: "Create group",
+            icon: "chatbubbles",
+            accent: theme.primary,
+            onPress: () => {
+              setGroupError("");
+              setDiscussionGroupType("general");
+              setCreateGroupOpen(true);
+            },
+          } satisfies FABMenuItem,
+        ]
+      : []),
+    {
+      id: "assign_task",
+      label: "Assign task",
+      icon: "checkbox-outline",
+      accent: theme.accent,
+      onPress: () => {
+        setAssignError("");
+        setAssignTaskOpen(true);
+      },
+    },
+  ];
+
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -319,36 +347,7 @@ export default function ProjectDetailScreen() {
         />
       )}
 
-      <ExpandableFAB
-        visible={tab === "discussions"}
-        items={[
-          ...(isOwner
-            ? [
-                {
-                  id: "create_group",
-                  label: "Create group",
-                  icon: "chatbubbles",
-                  accent: theme.primary,
-                  onPress: () => {
-                    setGroupError("");
-                    setDiscussionGroupType("general");
-                    setCreateGroupOpen(true);
-                  },
-                },
-              ]
-            : []),
-          {
-            id: "assign_task",
-            label: "Assign task",
-            icon: "checkbox-outline",
-            accent: theme.accent,
-            onPress: () => {
-              setAssignError("");
-              setAssignTaskOpen(true);
-            },
-          },
-        ]}
-      />
+      <ExpandableFAB visible={tab === "discussions"} items={discussionFabItems} />
 
       <AssignTaskFlowSheet
         visible={assignTaskOpen}

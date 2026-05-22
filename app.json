@@ -26,7 +26,8 @@
         "backgroundColor": "#f4f6fa"
       },
       "package": "com.tobedone.app",
-      "versionCode": 1,
+      "versionCode": 3,
+      "softwareKeyboardLayoutMode": "resize",
       "usesCleartextTraffic": true,
       "permissions": [
         "android.permission.RECORD_AUDIO"
@@ -36,6 +37,15 @@
       "expo-router",
       "expo-secure-store",
       "expo-asset",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#6366f1",
+          "defaultChannel": "default",
+          "sounds": []
+        }
+      ],
       [
         "expo-image-picker",
         {

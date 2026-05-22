@@ -8,6 +8,7 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { useAuthStore } from "@/stores/auth-store";
 import { useSocketListeners } from "@/hooks/useSocket";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useTheme } from "@/hooks/useTheme";
 
 SplashScreen.preventAutoHideAsync();
@@ -19,6 +20,7 @@ function RootNav() {
   const { isDark } = useTheme();
 
   useSocketListeners();
+  usePushNotifications(isAuthenticated);
 
   useEffect(() => {
     hydrate().finally(() => SplashScreen.hideAsync());

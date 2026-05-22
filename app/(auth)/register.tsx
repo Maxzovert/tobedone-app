@@ -1,18 +1,11 @@
 import { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuthStore } from "@/stores/auth-store";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { AuthKeyboardLayout } from "@/components/auth/AuthKeyboardLayout";
 import { gradients, spacing, typography } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { TobedoneLogo } from "@/components/brand/TobedoneLogo";
@@ -43,52 +36,51 @@ export default function RegisterScreen() {
       }
       style={styles.flex}
     >
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView
-          contentContainerStyle={styles.container}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.brandRow}>
-            <TobedoneLogo width={64} height={77} color={theme.primary} />
-            <View>
-              <Text style={[styles.logo, { color: theme.text }]}>Create account</Text>
-              <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-                Join your team on Tobedone
-              </Text>
-            </View>
+      <AuthKeyboardLayout contentContainerStyle={styles.container}>
+        <View style={styles.brandRow}>
+          <TobedoneLogo width={64} height={77} color={theme.primary} />
+          <View style={styles.brandText}>
+            <Text style={[styles.logo, { color: theme.text }]}>Create account</Text>
+            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+              Join your team on Tobedone
+            </Text>
           </View>
+        </View>
 
-          <View style={styles.form}>
-            <Input label="Name" value={name} onChangeText={setName} placeholder="Your name" />
-            <Input label="Email" value={email} onChangeText={setEmail} placeholder="you@company.com" />
-            <Input
-              label="Password"
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Min 6 characters"
-              secureTextEntry
-            />
-            {error ? (
-              <Text style={[styles.error, { color: theme.danger }]}>{error}</Text>
-            ) : null}
-            <Button title="Create Account" onPress={handleRegister} loading={loading} />
-          </View>
+        <View style={styles.form}>
+          <Input label="Name" value={name} onChangeText={setName} placeholder="Your name" />
+          <Input
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="you@company.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <Input
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Min 6 characters"
+            secureTextEntry
+          />
+          {error ? (
+            <Text style={[styles.error, { color: theme.danger }]}>{error}</Text>
+          ) : null}
+          <Button title="Create Account" onPress={handleRegister} loading={loading} />
+        </View>
 
-          <TouchableOpacity style={styles.linkWrap}>
-            <Link href="/(auth)/login" asChild>
-              <Text style={[styles.link, { color: theme.textSecondary }]}>
-                Already have an account?{" "}
-                <Text style={[styles.linkBold, { color: theme.primary }]}>
-                  Sign in
-                </Text>
+        <TouchableOpacity style={styles.linkWrap}>
+          <Link href="/(auth)/login" asChild>
+            <Text style={[styles.link, { color: theme.textSecondary }]}>
+              Already have an account?{" "}
+              <Text style={[styles.linkBold, { color: theme.primary }]}>
+                Sign in
               </Text>
-            </Link>
-          </TouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
+            </Text>
+          </Link>
+        </TouchableOpacity>
+      </AuthKeyboardLayout>
     </LinearGradient>
   );
 }
@@ -96,9 +88,8 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: {
-    flexGrow: 1,
     justifyContent: "center",
-    padding: spacing.lg,
+    minHeight: "100%",
   },
   brandRow: {
     flexDirection: "row",
@@ -106,11 +97,12 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginBottom: spacing.xl,
   },
+  brandText: { flex: 1 },
   logo: { ...typography.h1, marginBottom: spacing.xs },
   subtitle: { ...typography.body },
   form: { marginTop: spacing.lg },
   error: { marginBottom: spacing.sm },
-  linkWrap: { marginTop: spacing.lg, alignItems: "center" },
+  linkWrap: { marginTop: spacing.lg, alignItems: "center", marginBottom: spacing.md },
   link: { ...typography.body },
   linkBold: { fontWeight: "600" },
 });

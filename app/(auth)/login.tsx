@@ -1,18 +1,11 @@
 import { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuthStore } from "@/stores/auth-store";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { AuthKeyboardLayout } from "@/components/auth/AuthKeyboardLayout";
 import { gradients, spacing, typography } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { getApiUrl } from "@/lib/getApiUrl";
@@ -43,60 +36,54 @@ export default function LoginScreen() {
       }
       style={styles.flex}
     >
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView
-          contentContainerStyle={styles.container}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.brandRow}>
-            <TobedoneLogo width={72} height={86} color={theme.primary} />
-            <Text style={[styles.logo, { color: theme.text }]}>Tobedone</Text>
-          </View>
-          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-            Team collaboration, reimagined
-          </Text>
+      <AuthKeyboardLayout contentContainerStyle={styles.container}>
+        <View style={styles.brandRow}>
+          <TobedoneLogo width={72} height={86} color={theme.primary} />
+          <Text style={[styles.logo, { color: theme.text }]}>Tobedone</Text>
+        </View>
+        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+          Team collaboration, reimagined
+        </Text>
 
-          <View style={styles.form}>
-            <Input
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="you@company.com"
-            />
-            <Input
-              label="Password"
-              value={password}
-              onChangeText={setPassword}
-              placeholder="••••••••"
-              secureTextEntry
-            />
-            {error ? (
-              <Text style={[styles.error, { color: theme.danger }]}>{error}</Text>
-            ) : null}
-            <Button title="Sign In" onPress={handleLogin} loading={loading} />
-          </View>
-
-          {__DEV__ ? (
-            <Text style={[styles.devHint, { color: theme.textSecondary }]}>
-              API: {getApiUrl()}
-            </Text>
+        <View style={styles.form}>
+          <Input
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="you@company.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <Input
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="••••••••"
+            secureTextEntry
+          />
+          {error ? (
+            <Text style={[styles.error, { color: theme.danger }]}>{error}</Text>
           ) : null}
+          <Button title="Sign In" onPress={handleLogin} loading={loading} />
+        </View>
 
-          <TouchableOpacity style={styles.linkWrap}>
-            <Link href="/(auth)/register" asChild>
-              <Text style={[styles.link, { color: theme.textSecondary }]}>
-                Don&apos;t have an account?{" "}
-                <Text style={[styles.linkBold, { color: theme.primary }]}>
-                  Sign up
-                </Text>
+        {__DEV__ ? (
+          <Text style={[styles.devHint, { color: theme.textSecondary }]}>
+            API: {getApiUrl()}
+          </Text>
+        ) : null}
+
+        <TouchableOpacity style={styles.linkWrap}>
+          <Link href="/(auth)/register" asChild>
+            <Text style={[styles.link, { color: theme.textSecondary }]}>
+              Don&apos;t have an account?{" "}
+              <Text style={[styles.linkBold, { color: theme.primary }]}>
+                Sign up
               </Text>
-            </Link>
-          </TouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
+            </Text>
+          </Link>
+        </TouchableOpacity>
+      </AuthKeyboardLayout>
     </LinearGradient>
   );
 }
@@ -104,9 +91,8 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: {
-    flexGrow: 1,
     justifyContent: "center",
-    padding: spacing.lg,
+    minHeight: "100%",
   },
   brandRow: {
     flexDirection: "row",
@@ -126,7 +112,7 @@ const styles = StyleSheet.create({
   form: { marginTop: spacing.lg },
   error: { marginBottom: spacing.sm },
   devHint: { ...typography.small, textAlign: "center", marginTop: spacing.md },
-  linkWrap: { marginTop: spacing.lg, alignItems: "center" },
+  linkWrap: { marginTop: spacing.lg, alignItems: "center", marginBottom: spacing.md },
   link: { ...typography.body },
   linkBold: { fontWeight: "600" },
 });
