@@ -13,13 +13,13 @@ function metroHost(): string | undefined {
  * first so the URL stays correct when your LAN IP changes.
  */
 export function getApiUrl(): string {
+  const fromEnv = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+
   const host = metroHost();
   if (host) {
     return `http://${host}:${API_PORT}`;
   }
-
-  const fromEnv = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");
-  if (fromEnv) return fromEnv;
 
   if (Platform.OS === "android" && !Constants.isDevice) {
     return `http://10.0.2.2:${API_PORT}`;
