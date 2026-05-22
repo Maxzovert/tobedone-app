@@ -7,7 +7,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "generate:icons": "node scripts/generate-brand-assets.mjs"
+    "generate:icons": "node scripts/generate-brand-assets.mjs",
+    "build:apk": "npx eas-cli build --platform android --profile preview",
+    "build:apk:prod": "npx eas-cli build --platform android --profile production"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

@@ -26,6 +26,7 @@
         "backgroundColor": "#f4f6fa"
       },
       "package": "com.tobedone.app",
+      "versionCode": 1,
       "usesCleartextTraffic": true
     },
     "plugins": [
