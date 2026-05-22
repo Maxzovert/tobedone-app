@@ -56,13 +56,23 @@ export const api = {
   patch: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: "PATCH", body: JSON.stringify(body) }),
   delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
-  upload: async (uri: string, name: string, type: string) => {
+  upload: async (
+    uri: string,
+    name: string,
+    type: string,
+    fields?: Record<string, string>
+  ) => {
     const formData = new FormData();
     formData.append("file", {
       uri,
       name,
       type,
     } as unknown as Blob);
+    if (fields) {
+      for (const [key, value] of Object.entries(fields)) {
+        formData.append(key, value);
+      }
+    }
 
     const headers: Record<string, string> = {};
     if (authToken) headers.Authorization = `Bearer ${authToken}`;

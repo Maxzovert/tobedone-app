@@ -7,7 +7,12 @@ export const profileService = {
     api.patch<User>("/profile", data),
   uploadAvatarFromUri: async (localUri: string, mimeType = "image/jpeg") => {
     const ext = mimeType.includes("png") ? "png" : "jpg";
-    const uploadRes = await api.upload(localUri, `avatar-${Date.now()}.${ext}`, mimeType);
+    const uploadRes = await api.upload(
+      localUri,
+      `avatar-${Date.now()}.${ext}`,
+      mimeType,
+      { folder: "avatars" }
+    );
     if (!uploadRes.success || !uploadRes.data?.url) {
       return { success: false as const, error: uploadRes.error || "Upload failed" };
     }
