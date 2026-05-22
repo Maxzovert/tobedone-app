@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Message } from "@/types";
+import { LinkedTaskPreview, Message } from "@/types";
 
 interface ChatState {
   messages: Record<string, Message[]>;
@@ -9,7 +9,18 @@ interface ChatState {
   setMessages: (groupId: string, messages: Message[]) => void;
   prependMessages: (groupId: string, messages: Message[]) => void;
   addMessage: (groupId: string, message: Message) => void;
-  updateReaction: (groupId: string, messageId: string, reaction: unknown) => void;
+  toggleReaction: (
+    groupId: string,
+    messageId: string,
+    userId: string,
+    userName: string,
+    emoji: string
+  ) => void;
+  updateLinkedTask: (
+    groupId: string,
+    taskId: string,
+    patch: Partial<LinkedTaskPreview>
+  ) => void;
   setTyping: (groupId: string, userId: string, isTyping: boolean) => void;
   clearGroup: (groupId: string) => void;
 }
@@ -38,17 +49,67 @@ export const useChatStore = create<ChatState>((set) => ({
     set((s) => {
       const existing = s.messages[groupId] || [];
       if (existing.some((m) => m.id === message.id)) return s;
+      const withoutStaleOptimistic = existing.filter(
+        (m) =>
+          !(
+            m.id.startsWith("temp-") &&
+            m.sender.id === message.sender.id &&
+            m.content === message.content
+          )
+      );
       return {
         messages: {
           ...s.messages,
-          [groupId]: [...existing, message],
+          [groupId]: [...withoutStaleOptimistic, message],
         },
       };
     }),
 
-  updateReaction: (_groupId, _messageId, _reaction) => {
-    // Reactions refresh on next fetch; socket handler can extend this
-  },
+  updateLinkedTask: (groupId, taskId, patch) =>
+    set((s) => {
+      const msgs = s.messages[groupId];
+      if (!msgs) return s;
+      return {
+        messages: {
+          ...s.messages,
+          [groupId]: msgs.map((m) =>
+            m.linkedTask?.id === taskId
+              ? { ...m, linkedTask: { ...m.linkedTask!, ...patch } }
+              : m
+          ),
+        },
+      };
+    }),
+
+  toggleReaction: (groupId, messageId, userId, userName, emoji) =>
+    set((s) => {
+      const msgs = s.messages[groupId];
+      if (!msgs) return s;
+      return {
+        messages: {
+          ...s.messages,
+          [groupId]: msgs.map((m) => {
+            if (m.id !== messageId) return m;
+            const reactions = [...(m.reactions || [])];
+            const idx = reactions.findIndex(
+              (r) => r.userId === userId && r.emoji === emoji
+            );
+            if (idx >= 0) {
+              reactions.splice(idx, 1);
+            } else {
+              reactions.push({
+                id: `temp-reaction-${Date.now()}`,
+                messageId,
+                emoji,
+                userId,
+                userName,
+              });
+            }
+            return { ...m, reactions };
+          }),
+        },
+      };
+    }),
 
   setTyping: (groupId, userId, isTyping) =>
     set((s) => {

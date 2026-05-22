@@ -4,7 +4,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useNotificationStore } from "@/stores/notification-store";
 
 export default function TabsLayout() {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const unread = useNotificationStore((s) => s.unreadCount);
 
   return (
@@ -16,6 +16,12 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: theme.tabBar,
           borderTopColor: theme.border,
+          borderTopWidth: 1,
+          elevation: isDark ? 0 : 8,
+          shadowColor: theme.cardShadow,
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: isDark ? 0 : 0.06,
+          shadowRadius: 8,
         },
       }}
     >

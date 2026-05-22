@@ -1,27 +1,30 @@
 export const colors = {
   light: {
-    background: "#f8f9fc",
+    background: "#f4f6fa",
     surface: "#ffffff",
-    surfaceGlass: "rgba(255,255,255,0.72)",
-    text: "#0f0f14",
-    textSecondary: "#6b7280",
-    border: "rgba(15,15,20,0.08)",
-    primary: "#6366f1",
-    primaryDark: "#4f46e5",
-    accent: "#8b5cf6",
-    success: "#10b981",
-    warning: "#f59e0b",
-    danger: "#ef4444",
+    surfaceGlass: "#ffffff",
+    text: "#111827",
+    textSecondary: "#64748b",
+    border: "#e2e8f0",
+    primary: "#4f46e5",
+    primaryDark: "#4338ca",
+    accent: "#7c3aed",
+    success: "#059669",
+    warning: "#d97706",
+    danger: "#dc2626",
     tabBar: "#ffffff",
-    cardShadow: "rgba(99,102,241,0.12)",
+    cardShadow: "#0f172a",
+    skeleton: "#e2e8f0",
+    onPrimary: "#ffffff",
+    overlay: "rgba(15, 23, 42, 0.45)",
   },
   dark: {
     background: "#0f0f14",
     surface: "#1a1a24",
-    surfaceGlass: "rgba(26,26,36,0.72)",
+    surfaceGlass: "rgba(26, 26, 36, 0.72)",
     text: "#f4f4f8",
     textSecondary: "#9ca3af",
-    border: "rgba(255,255,255,0.08)",
+    border: "rgba(255, 255, 255, 0.08)",
     primary: "#818cf8",
     primaryDark: "#6366f1",
     accent: "#a78bfa",
@@ -29,7 +32,19 @@ export const colors = {
     warning: "#fbbf24",
     danger: "#f87171",
     tabBar: "#1a1a24",
-    cardShadow: "rgba(129,140,248,0.15)",
+    cardShadow: "rgba(129, 140, 248, 0.15)",
+    skeleton: "rgba(255, 255, 255, 0.08)",
+    onPrimary: "#ffffff",
+    overlay: "rgba(0, 0, 0, 0.55)",
+  },
+};
+
+export type ThemeColors = (typeof colors)["light"];
+
+export const gradients = {
+  auth: {
+    light: ["#f4f6fa", "#eef2ff", "#e0e7ff"] as const,
+    dark: ["#0f0f14", "#1a1a2e", "#312e81"] as const,
   },
 };
 

@@ -13,6 +13,12 @@ export const messagesService = {
     content: string;
     attachments?: string[];
     mentionedUserIds?: string[];
+    linkedTaskId?: string;
+    assignTask?: {
+      title: string;
+      assignedTo: string;
+      taskGroupId: string;
+    };
   }) => api.post<Message>("/messages", data),
   react: (messageId: string, emoji: string) =>
     api.post<unknown>("/messages/react", { messageId, emoji }),

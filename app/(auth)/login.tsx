@@ -13,10 +13,14 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useAuthStore } from "@/stores/auth-store";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { spacing, typography } from "@/constants/theme";
+import { gradients, spacing, typography } from "@/constants/theme";
+import { useTheme } from "@/hooks/useTheme";
+import { getApiUrl } from "@/lib/getApiUrl";
+import { TobedoneLogo } from "@/components/brand/TobedoneLogo";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { theme, isDark } = useTheme();
   const login = useAuthStore((s) => s.login);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,7 +37,12 @@ export default function LoginScreen() {
   };
 
   return (
-    <LinearGradient colors={["#0f0f14", "#1a1a2e", "#312e81"]} style={styles.flex}>
+    <LinearGradient
+      colors={
+        isDark ? [...gradients.auth.dark] : [...gradients.auth.light]
+      }
+      style={styles.flex}
+    >
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -42,8 +51,13 @@ export default function LoginScreen() {
           contentContainerStyle={styles.container}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.logo}>Tobedone</Text>
-          <Text style={styles.subtitle}>Team collaboration, reimagined</Text>
+          <View style={styles.brandRow}>
+            <TobedoneLogo width={72} height={86} color={theme.primary} />
+            <Text style={[styles.logo, { color: theme.text }]}>Tobedone</Text>
+          </View>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+            Team collaboration, reimagined
+          </Text>
 
           <View style={styles.form}>
             <Input
@@ -59,14 +73,25 @@ export default function LoginScreen() {
               placeholder="••••••••"
               secureTextEntry
             />
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? (
+              <Text style={[styles.error, { color: theme.danger }]}>{error}</Text>
+            ) : null}
             <Button title="Sign In" onPress={handleLogin} loading={loading} />
           </View>
 
+          {__DEV__ ? (
+            <Text style={[styles.devHint, { color: theme.textSecondary }]}>
+              API: {getApiUrl()}
+            </Text>
+          ) : null}
+
           <TouchableOpacity style={styles.linkWrap}>
             <Link href="/(auth)/register" asChild>
-              <Text style={styles.link}>
-                Don&apos;t have an account? <Text style={styles.linkBold}>Sign up</Text>
+              <Text style={[styles.link, { color: theme.textSecondary }]}>
+                Don&apos;t have an account?{" "}
+                <Text style={[styles.linkBold, { color: theme.primary }]}>
+                  Sign up
+                </Text>
               </Text>
             </Link>
           </TouchableOpacity>
@@ -83,20 +108,25 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: spacing.lg,
   },
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+  },
   logo: {
     ...typography.h1,
-    color: "#fff",
-    fontSize: 36,
-    marginBottom: spacing.xs,
+    fontSize: 32,
   },
   subtitle: {
     ...typography.body,
-    color: "rgba(255,255,255,0.7)",
     marginBottom: spacing.xl,
+    marginTop: spacing.xs,
   },
   form: { marginTop: spacing.lg },
-  error: { color: "#f87171", marginBottom: spacing.sm },
+  error: { marginBottom: spacing.sm },
+  devHint: { ...typography.small, textAlign: "center", marginTop: spacing.md },
   linkWrap: { marginTop: spacing.lg, alignItems: "center" },
-  link: { color: "rgba(255,255,255,0.7)" },
-  linkBold: { color: "#818cf8", fontWeight: "600" },
+  link: { ...typography.body },
+  linkBold: { fontWeight: "600" },
 });

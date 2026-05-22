@@ -1,5 +1,6 @@
 import { View, Text, Image, StyleSheet } from "react-native";
 import { useTheme } from "@/hooks/useTheme";
+import { resolveMediaUrl } from "@/lib/mediaUrl";
 
 interface Props {
   name: string;
@@ -16,10 +17,11 @@ export function Avatar({ name, uri, size = 40 }: Props) {
     .slice(0, 2)
     .toUpperCase();
 
-  if (uri) {
+  const imageUri = resolveMediaUrl(uri);
+  if (imageUri) {
     return (
       <Image
-        source={{ uri }}
+        source={{ uri: imageUri }}
         style={[styles.img, { width: size, height: size, borderRadius: size / 2 }]}
       />
     );
@@ -37,7 +39,14 @@ export function Avatar({ name, uri, size = 40 }: Props) {
         },
       ]}
     >
-      <Text style={[styles.text, { fontSize: size * 0.35 }]}>{initials}</Text>
+      <Text
+        style={[
+          styles.text,
+          { fontSize: size * 0.35, color: theme.onPrimary },
+        ]}
+      >
+        {initials}
+      </Text>
     </View>
   );
 }
@@ -45,5 +54,5 @@ export function Avatar({ name, uri, size = 40 }: Props) {
 const styles = StyleSheet.create({
   img: {},
   fallback: { alignItems: "center", justifyContent: "center" },
-  text: { color: "#fff", fontWeight: "700" },
+  text: { fontWeight: "700" },
 });

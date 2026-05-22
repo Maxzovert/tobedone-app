@@ -50,14 +50,14 @@ export function Button({
       activeOpacity={0.8}
     >
       {loading ? (
-        <ActivityIndicator color="#fff" />
+        <ActivityIndicator color={theme.onPrimary} />
       ) : (
         <Text
           style={[
             styles.text,
             {
               color:
-                variant === "primary" ? "#fff" : theme.text,
+                variant === "primary" ? theme.onPrimary : theme.text,
             },
           ]}
         >

@@ -6,12 +6,15 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "tobedone",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0f0f14"
+      "backgroundColor": "#f4f6fa"
+    },
+    "androidStatusBar": {
+      "backgroundColor": "#f4f6fa"
     },
     "ios": {
       "supportsTablet": true,
@@ -20,7 +23,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0f0f14"
+        "backgroundColor": "#f4f6fa"
       },
       "package": "com.tobedone.app",
       "usesCleartextTraffic": true
@@ -28,7 +31,13 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Tobedone to access your photos to set a profile picture."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

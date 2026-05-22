@@ -30,11 +30,18 @@ export interface ProjectMember {
   user: Pick<User, "id" | "name" | "email" | "avatar" | "designation">;
 }
 
+export type GroupType = "general" | "admin";
+
 export interface TaskGroup {
   id: string;
   projectId: string;
   name: string;
+  icon?: string | null;
+  kind?: string | null;
+  groupType?: GroupType | null;
 }
+
+export type TaskScope = "assigned" | "project";
 
 export interface Task {
   id: string;
@@ -46,7 +53,32 @@ export interface Task {
   taskGroupId: string;
   dueDate: string | null;
   createdBy: string;
+  responseNote?: string | null;
+  scope?: TaskScope;
   createdAt: string;
+}
+
+/** Task metadata shown on linked personal todos */
+export interface TodoTaskMeta extends Task {
+  projectId?: string | null;
+  projectName?: string | null;
+  projectColor?: string | null;
+  sourceGroupId?: string | null;
+  sourceGroupName?: string | null;
+  sourceGroupType?: GroupType | string | null;
+  creatorName?: string | null;
+  assigneeName?: string | null;
+  memberCount?: number | null;
+  completedCount?: number | null;
+}
+
+export interface ProjectTask extends Task {
+  scope: "project";
+  creatorName: string | null;
+  memberCount: number;
+  completedCount: number;
+  myCompleted: boolean;
+  myTodoId: string | null;
 }
 
 export interface Todo {
@@ -54,6 +86,8 @@ export interface Todo {
   userId: string;
   title: string;
   completed: boolean;
+  taskId?: string | null;
+  task?: TodoTaskMeta | null;
   createdAt: string;
 }
 
@@ -72,17 +106,39 @@ export interface Reaction {
   userName?: string;
 }
 
+export interface LinkedTaskPreview {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+  assignedTo: string | null;
+  taskGroupId: string;
+  assigneeName: string | null;
+}
+
 export interface Message {
   id: string;
   groupId: string;
   content: string;
   attachments: string[];
   mentionedUserIds: string[];
+  linkedTaskId?: string | null;
+  linkedTask?: LinkedTaskPreview | null;
   readBy: string[];
   createdAt: string;
   sender: MessageSender;
   reactions?: Reaction[];
 }
+
+export type ChatSendPayload = {
+  content: string;
+  mentionedUserIds: string[];
+  assignTask?: {
+    title: string;
+    assignedTo: string;
+    taskGroupId: string;
+  };
+};
 
 export interface Notification {
   id: string;
@@ -118,6 +174,9 @@ export interface HomeData {
 export interface ProjectDetail {
   project: Project;
   members: ProjectMember[];
+  /** Discussion groups only (admin + normal). */
   taskGroups: TaskGroup[];
+  taskBucketId: string;
   memberRole: string;
+  isOwner?: boolean;
 }

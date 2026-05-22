@@ -9,13 +9,14 @@ interface Props {
 }
 
 export function GlassCard({ children, style }: Props) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   return (
     <View
       style={[
         styles.card,
+        isDark ? styles.cardDark : styles.cardLight,
         {
-          backgroundColor: theme.surfaceGlass,
+          backgroundColor: isDark ? theme.surfaceGlass : theme.surface,
           borderColor: theme.border,
           shadowColor: theme.cardShadow,
         },
@@ -32,6 +33,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     borderWidth: 1,
     padding: spacing.md,
+  },
+  cardLight: {
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cardDark: {
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,

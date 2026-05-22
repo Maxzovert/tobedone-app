@@ -10,6 +10,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (themeMode === "system") {
       setIsDark(scheme === "dark");
+    } else {
+      setIsDark(themeMode === "dark");
     }
   }, [scheme, themeMode, setIsDark]);
 

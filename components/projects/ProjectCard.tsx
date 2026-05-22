@@ -22,7 +22,7 @@ export function ProjectCard({ project }: Props) {
         <View
           style={[styles.icon, { backgroundColor: project.color || theme.primary }]}
         >
-          <Text style={styles.iconText}>
+          <Text style={[styles.iconText, { color: theme.onPrimary }]}>
             {project.name.charAt(0).toUpperCase()}
           </Text>
         </View>
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: spacing.sm,
   },
-  iconText: { color: "#fff", fontSize: 20, fontWeight: "700" },
+  iconText: { fontSize: 20, fontWeight: "700" },
   name: { ...typography.h3 },
   desc: { ...typography.caption, marginTop: 4 },
 });

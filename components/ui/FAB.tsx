@@ -13,10 +13,16 @@ export function FAB({ onPress, icon = "add" }: Props) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={[styles.fab, { backgroundColor: theme.primary }]}
+      style={[
+        styles.fab,
+        {
+          backgroundColor: theme.primary,
+          shadowColor: theme.primary,
+        },
+      ]}
       activeOpacity={0.85}
     >
-      <Ionicons name={icon} size={28} color="#fff" />
+      <Ionicons name={icon} size={28} color={theme.onPrimary} />
     </TouchableOpacity>
   );
 }
@@ -31,7 +37,6 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#6366f1",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 12,

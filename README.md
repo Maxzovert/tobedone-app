@@ -17,32 +17,30 @@ cd mobile
 npm install
 ```
 
-2. Copy environment file:
+2. Start the backend (separate terminal):
 
 ```bash
-cp .env.example .env
+cd ../backend
+npm run dev
 ```
 
-3. Set API URL in `.env`:
-
-```env
-# iOS Simulator / web
-EXPO_PUBLIC_API_URL=http://localhost:3000
-
-# Android Emulator
-# EXPO_PUBLIC_API_URL=http://10.0.2.2:3000
-
-# Physical device (use your machine's LAN IP)
-# EXPO_PUBLIC_API_URL=http://192.168.1.100:3000
-```
-
-4. Start Expo:
+3. Start Expo:
 
 ```bash
 npx expo start
 ```
 
 Scan the QR code with Expo Go, or press `i` / `a` for simulators.
+
+The app **auto-detects** the API URL in dev (same IP as the Expo QR code on a phone; `10.0.2.2` on Android emulator).
+
+**Sign-in fails with "Cannot reach API"?**
+
+1. Confirm backend is running (`http://localhost:3000/health` should return OK).
+2. Phone and PC must be on the **same Wi‑Fi** (not mobile data).
+3. On Windows, run `scripts/allow-api-firewall.ps1` **as Administrator** to allow port 3000.
+4. Reload the app after restarting Expo (`npx expo start -c` clears cache).
+5. On the login screen (dev builds), check the **API:** line matches your setup.
 
 ## Features
 

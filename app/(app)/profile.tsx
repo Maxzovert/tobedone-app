@@ -1,8 +1,18 @@
 import { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Pressable,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { useAuthStore } from "@/stores/auth-store";
 import { profileService } from "@/services/profile.service";
 import { useTheme } from "@/hooks/useTheme";
@@ -20,6 +30,8 @@ export default function ProfileScreen() {
   const [name, setName] = useState(user?.name || "");
   const [designation, setDesignation] = useState(user?.designation || "");
   const [saving, setSaving] = useState(false);
+  const [avatarLoading, setAvatarLoading] = useState(false);
+  const [avatarError, setAvatarError] = useState("");
 
   const handleSave = async () => {
     setSaving(true);
@@ -29,6 +41,57 @@ export default function ProfileScreen() {
     });
     setSaving(false);
     if (res.success && res.data) setUser(res.data);
+  };
+
+  const handlePickAvatar = async () => {
+    setAvatarError("");
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission needed",
+        "Allow photo library access to choose a profile picture."
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.85,
+    });
+
+    if (result.canceled || !result.assets[0]) return;
+
+    const asset = result.assets[0];
+    setAvatarLoading(true);
+    const res = await profileService.uploadAvatarFromUri(
+      asset.uri,
+      asset.mimeType ?? "image/jpeg"
+    );
+    setAvatarLoading(false);
+
+    if (!res.success) {
+      setAvatarError(res.error || "Could not update profile photo");
+      return;
+    }
+    if (res.data) setUser(res.data);
+  };
+
+  const handleRemoveAvatar = () => {
+    Alert.alert("Remove photo", "Use your initials instead of a photo?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: async () => {
+          setAvatarLoading(true);
+          const res = await profileService.update({ avatar: null });
+          setAvatarLoading(false);
+          if (res.success && res.data) setUser(res.data);
+        },
+      },
+    ]);
   };
 
   const handleLogout = async () => {
@@ -50,10 +113,37 @@ export default function ProfileScreen() {
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.avatarWrap}>
-          <Avatar name={user?.name || "?"} uri={user?.avatar} size={80} />
-          <Text style={[styles.email, { color: theme.textSecondary }]}>
-            {user?.email}
+          <Pressable
+            onPress={handlePickAvatar}
+            disabled={avatarLoading}
+            style={({ pressed }) => [styles.avatarPressable, { opacity: pressed ? 0.9 : 1 }]}
+          >
+            <Avatar name={user?.name || "?"} uri={user?.avatar} size={96} />
+            <View
+              style={[
+                styles.cameraBadge,
+                { backgroundColor: theme.primary, borderColor: theme.surface },
+              ]}
+            >
+              {avatarLoading ? (
+                <ActivityIndicator size="small" color={theme.onPrimary} />
+              ) : (
+                <Ionicons name="camera" size={18} color={theme.onPrimary} />
+              )}
+            </View>
+          </Pressable>
+          <Text style={[styles.avatarHint, { color: theme.textSecondary }]}>
+            Tap to change photo
           </Text>
+          {user?.avatar ? (
+            <Pressable onPress={handleRemoveAvatar} disabled={avatarLoading}>
+              <Text style={[styles.removePhoto, { color: theme.danger }]}>Remove photo</Text>
+            </Pressable>
+          ) : null}
+          {avatarError ? (
+            <Text style={[styles.avatarError, { color: theme.danger }]}>{avatarError}</Text>
+          ) : null}
+          <Text style={[styles.email, { color: theme.textSecondary }]}>{user?.email}</Text>
         </View>
 
         <Input label="Name" value={name} onChangeText={setName} />
@@ -85,6 +175,21 @@ const styles = StyleSheet.create({
   title: { ...typography.h2 },
   content: { padding: spacing.md },
   avatarWrap: { alignItems: "center", marginBottom: spacing.lg },
-  email: { ...typography.caption, marginTop: spacing.sm },
+  avatarPressable: { position: "relative" },
+  cameraBadge: {
+    position: "absolute",
+    right: 0,
+    bottom: 0,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 3,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarHint: { ...typography.caption, marginTop: spacing.sm },
+  removePhoto: { fontSize: 13, fontWeight: "600", marginTop: spacing.xs },
+  avatarError: { ...typography.caption, marginTop: spacing.xs, textAlign: "center" },
+  email: { ...typography.caption, marginTop: spacing.xs },
   logout: { marginTop: spacing.xl, alignItems: "center" },
 });

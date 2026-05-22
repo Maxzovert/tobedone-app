@@ -7,6 +7,6 @@ export const tasksService = {
   update: (id: string, data: Partial<Task>) =>
     api.patch<Task>(`/tasks/${id}`, data),
   delete: (id: string) => api.delete<{ deleted: boolean }>(`/tasks/${id}`),
-  respond: (id: string, action: "accept" | "reject") =>
-    api.post<Task>(`/tasks/${id}/respond`, { action }),
+  respond: (id: string, action: "accept" | "reject", note?: string) =>
+    api.post<Task>(`/tasks/${id}/respond`, { action, note }),
 };

@@ -13,10 +13,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useAuthStore } from "@/stores/auth-store";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { spacing, typography } from "@/constants/theme";
+import { gradients, spacing, typography } from "@/constants/theme";
+import { useTheme } from "@/hooks/useTheme";
+import { TobedoneLogo } from "@/components/brand/TobedoneLogo";
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { theme, isDark } = useTheme();
   const register = useAuthStore((s) => s.register);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -34,7 +37,12 @@ export default function RegisterScreen() {
   };
 
   return (
-    <LinearGradient colors={["#0f0f14", "#1a1a2e", "#4c1d95"]} style={styles.flex}>
+    <LinearGradient
+      colors={
+        isDark ? [...gradients.auth.dark] : [...gradients.auth.light]
+      }
+      style={styles.flex}
+    >
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -43,8 +51,15 @@ export default function RegisterScreen() {
           contentContainerStyle={styles.container}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.logo}>Create account</Text>
-          <Text style={styles.subtitle}>Join your team on Tobedone</Text>
+          <View style={styles.brandRow}>
+            <TobedoneLogo width={64} height={77} color={theme.primary} />
+            <View>
+              <Text style={[styles.logo, { color: theme.text }]}>Create account</Text>
+              <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+                Join your team on Tobedone
+              </Text>
+            </View>
+          </View>
 
           <View style={styles.form}>
             <Input label="Name" value={name} onChangeText={setName} placeholder="Your name" />
@@ -56,14 +71,19 @@ export default function RegisterScreen() {
               placeholder="Min 6 characters"
               secureTextEntry
             />
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? (
+              <Text style={[styles.error, { color: theme.danger }]}>{error}</Text>
+            ) : null}
             <Button title="Create Account" onPress={handleRegister} loading={loading} />
           </View>
 
           <TouchableOpacity style={styles.linkWrap}>
             <Link href="/(auth)/login" asChild>
-              <Text style={styles.link}>
-                Already have an account? <Text style={styles.linkBold}>Sign in</Text>
+              <Text style={[styles.link, { color: theme.textSecondary }]}>
+                Already have an account?{" "}
+                <Text style={[styles.linkBold, { color: theme.primary }]}>
+                  Sign in
+                </Text>
               </Text>
             </Link>
           </TouchableOpacity>
@@ -80,11 +100,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: spacing.lg,
   },
-  logo: { ...typography.h1, color: "#fff", marginBottom: spacing.xs },
-  subtitle: { ...typography.body, color: "rgba(255,255,255,0.7)", marginBottom: spacing.xl },
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    marginBottom: spacing.xl,
+  },
+  logo: { ...typography.h1, marginBottom: spacing.xs },
+  subtitle: { ...typography.body },
   form: { marginTop: spacing.lg },
-  error: { color: "#f87171", marginBottom: spacing.sm },
+  error: { marginBottom: spacing.sm },
   linkWrap: { marginTop: spacing.lg, alignItems: "center" },
-  link: { color: "rgba(255,255,255,0.7)" },
-  linkBold: { color: "#a78bfa", fontWeight: "600" },
+  link: { ...typography.body },
+  linkBold: { fontWeight: "600" },
 });

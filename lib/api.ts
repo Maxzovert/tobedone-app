@@ -1,7 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import { ApiResponse } from "@/types";
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+import { getApiUrl } from "./getApiUrl";
 
 let authToken: string | null = null;
 
@@ -19,9 +18,7 @@ export async function setToken(token: string | null) {
   }
 }
 
-export function getApiUrl() {
-  return API_URL;
-}
+export { getApiUrl };
 
 async function request<T>(
   path: string,
@@ -36,13 +33,20 @@ async function request<T>(
     headers.Authorization = `Bearer ${authToken}`;
   }
 
-  const res = await fetch(`${API_URL}/api${path}`, {
-    ...options,
-    headers,
-  });
+  try {
+    const res = await fetch(`${getApiUrl()}/api${path}`, {
+      ...options,
+      headers,
+    });
 
-  const json = (await res.json()) as ApiResponse<T>;
-  return json;
+    const json = (await res.json()) as ApiResponse<T>;
+    return json;
+  } catch {
+    return {
+      success: false,
+      error: `Cannot reach API at ${getApiUrl()}. Start the backend (npm run dev in /backend) and allow port 3000 in Windows Firewall if using a physical phone.`,
+    };
+  }
 }
 
 export const api = {
@@ -63,11 +67,18 @@ export const api = {
     const headers: Record<string, string> = {};
     if (authToken) headers.Authorization = `Bearer ${authToken}`;
 
-    const res = await fetch(`${API_URL}/api/upload`, {
-      method: "POST",
-      headers,
-      body: formData,
-    });
-    return (await res.json()) as ApiResponse<{ url: string }>;
+    try {
+      const res = await fetch(`${getApiUrl()}/api/upload`, {
+        method: "POST",
+        headers,
+        body: formData,
+      });
+      return (await res.json()) as ApiResponse<{ url: string }>;
+    } catch {
+      return {
+        success: false,
+        error: `Cannot reach API at ${getApiUrl()}. Start the backend (npm run dev in /backend) and allow port 3000 in Windows Firewall if using a physical phone.`,
+      };
+    }
   },
 };

@@ -10,8 +10,8 @@ interface UIState {
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  themeMode: "system",
-  isDark: true,
+  themeMode: "light",
+  isDark: false,
   setThemeMode: (mode) => set({ themeMode: mode }),
   setIsDark: (isDark) => set({ isDark }),
 }));
