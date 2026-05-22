@@ -9,7 +9,11 @@
     "web": "expo start --web",
     "generate:icons": "node scripts/generate-brand-assets.mjs",
     "build:apk": "npx eas-cli build --platform android --profile preview",
-    "build:apk:prod": "npx eas-cli build --platform android --profile production"
+    "build:apk:prod": "npx eas-cli build --platform android --profile production",
+    "build:ios": "npx eas-cli build --platform ios --profile preview",
+    "build:ios:sim": "npx eas-cli build --platform ios --profile preview-simulator",
+    "build:ios:prod": "npx eas-cli build --platform ios --profile production",
+    "build:all": "npx eas-cli build --platform all --profile preview"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

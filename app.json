@@ -18,7 +18,12 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tobedone.app"
+      "bundleIdentifier": "com.tobedone.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Allow Tobedone to access your photos to set a profile picture.",
+        "UIBackgroundModes": ["remote-notification"]
+      }
     },
     "android": {
       "adaptiveIcon": {
