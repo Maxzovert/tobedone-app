@@ -6,8 +6,9 @@ import { getStoredToken, setStoredToken } from "./authStorage";
 
 let authToken: string | null = null;
 
-export async function loadToken() {
-  authToken = await getStoredToken();
+/** Load token from storage, or use a token you already read (e.g. hydrate). */
+export async function loadToken(existing?: string | null) {
+  authToken = existing ?? (await getStoredToken());
   return authToken;
 }
 
@@ -37,7 +38,16 @@ async function request<T>(
       headers,
     });
 
-    const json = (await res.json()) as ApiResponse<T>;
+    let json: ApiResponse<T>;
+    try {
+      json = (await res.json()) as ApiResponse<T>;
+    } catch {
+      return {
+        success: false,
+        httpStatus: res.status,
+        error: "Invalid server response",
+      };
+    }
     return { ...json, httpStatus: res.status };
   } catch {
     return {

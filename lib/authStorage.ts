@@ -1,41 +1,41 @@
-import { Platform } from "react-native";
-import * as SecureStore from "expo-secure-store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { User } from "@/types";
 
 const TOKEN_KEY = "auth_token";
 const USER_KEY = "auth_user";
 
+async function migrateLegacyWebKey(key: string): Promise<string | null> {
+  if (typeof window === "undefined" || !window.localStorage) return null;
+  const legacy = localStorage.getItem(key);
+  if (!legacy) return null;
+  await AsyncStorage.setItem(key, legacy);
+  localStorage.removeItem(key);
+  return legacy;
+}
+
 export async function getStoredToken(): Promise<string | null> {
-  if (Platform.OS === "web") {
-    try {
-      return localStorage.getItem(TOKEN_KEY);
-    } catch {
-      return null;
-    }
+  try {
+    let token = await AsyncStorage.getItem(TOKEN_KEY);
+    if (!token) token = await migrateLegacyWebKey(TOKEN_KEY);
+    return token;
+  } catch {
+    return null;
   }
-  return SecureStore.getItemAsync(TOKEN_KEY);
 }
 
 export async function setStoredToken(token: string | null): Promise<void> {
-  if (Platform.OS === "web") {
-    try {
-      if (token) localStorage.setItem(TOKEN_KEY, token);
-      else localStorage.removeItem(TOKEN_KEY);
-    } catch {
-      /* ignore */
-    }
-    return;
+  try {
+    if (token) await AsyncStorage.setItem(TOKEN_KEY, token);
+    else await AsyncStorage.removeItem(TOKEN_KEY);
+  } catch {
+    /* ignore */
   }
-  if (token) await SecureStore.setItemAsync(TOKEN_KEY, token);
-  else await SecureStore.deleteItemAsync(TOKEN_KEY);
 }
 
 export async function getStoredUser(): Promise<User | null> {
   try {
-    const raw =
-      Platform.OS === "web"
-        ? localStorage.getItem(USER_KEY)
-        : await SecureStore.getItemAsync(USER_KEY);
+    let raw = await AsyncStorage.getItem(USER_KEY);
+    if (!raw) raw = await migrateLegacyWebKey(USER_KEY);
     if (!raw) return null;
     return JSON.parse(raw) as User;
   } catch {
@@ -45,13 +45,8 @@ export async function getStoredUser(): Promise<User | null> {
 
 export async function setStoredUser(user: User | null): Promise<void> {
   try {
-    if (Platform.OS === "web") {
-      if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
-      else localStorage.removeItem(USER_KEY);
-      return;
-    }
-    if (user) await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
-    else await SecureStore.deleteItemAsync(USER_KEY);
+    if (user) await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
+    else await AsyncStorage.removeItem(USER_KEY);
   } catch {
     /* ignore */
   }
