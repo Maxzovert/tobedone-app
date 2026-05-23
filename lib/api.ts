@@ -1,21 +1,17 @@
-import * as SecureStore from "expo-secure-store";
 import { ApiResponse } from "@/types";
 import { getApiUrl } from "./getApiUrl";
+import { getStoredToken, setStoredToken } from "./authStorage";
 
 let authToken: string | null = null;
 
 export async function loadToken() {
-  authToken = await SecureStore.getItemAsync("auth_token");
+  authToken = await getStoredToken();
   return authToken;
 }
 
 export async function setToken(token: string | null) {
   authToken = token;
-  if (token) {
-    await SecureStore.setItemAsync("auth_token", token);
-  } else {
-    await SecureStore.deleteItemAsync("auth_token");
-  }
+  await setStoredToken(token);
 }
 
 export { getApiUrl };

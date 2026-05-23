@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import { notificationsService } from "@/services/notifications.service";
 import {
   getExpoPushToken,
@@ -8,6 +9,8 @@ import {
 let lastRegisteredToken: string | null = null;
 
 export async function registerPushWithBackend(): Promise<void> {
+  if (Platform.OS === "web") return;
+
   const granted = await requestPushPermissions();
   if (!granted) return;
 
@@ -19,6 +22,7 @@ export async function registerPushWithBackend(): Promise<void> {
 }
 
 export async function unregisterPushToken(): Promise<void> {
+  if (Platform.OS === "web") return;
   if (!lastRegisteredToken) return;
   await notificationsService.removePushToken(lastRegisteredToken);
   lastRegisteredToken = null;

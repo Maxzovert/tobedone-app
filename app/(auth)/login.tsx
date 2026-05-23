@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { Link, useRouter } from "expo-router";
+import { View, Text, StyleSheet, Pressable } from "react-native";
+import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuthStore } from "@/stores/auth-store";
 import { Input } from "@/components/ui/Input";
@@ -73,16 +73,15 @@ export default function LoginScreen() {
           </Text>
         ) : null}
 
-        <TouchableOpacity style={styles.linkWrap}>
-          <Link href="/(auth)/register" asChild>
-            <Text style={[styles.link, { color: theme.textSecondary }]}>
-              Don&apos;t have an account?{" "}
-              <Text style={[styles.linkBold, { color: theme.primary }]}>
-                Sign up
-              </Text>
-            </Text>
-          </Link>
-        </TouchableOpacity>
+        <Pressable
+          onPress={() => router.push("/(auth)/register")}
+          style={styles.linkWrap}
+        >
+          <Text style={[styles.link, { color: theme.textSecondary }]}>
+            Don&apos;t have an account?{" "}
+            <Text style={[styles.linkBold, { color: theme.primary }]}>Sign up</Text>
+          </Text>
+        </Pressable>
       </AuthKeyboardLayout>
     </LinearGradient>
   );
@@ -91,8 +90,8 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: {
+    flexGrow: 1,
     justifyContent: "center",
-    minHeight: "100%",
   },
   brandRow: {
     flexDirection: "row",

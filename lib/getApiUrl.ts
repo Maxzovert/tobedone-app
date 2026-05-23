@@ -16,6 +16,10 @@ export function getApiUrl(): string {
   const fromEnv = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");
   if (fromEnv) return fromEnv;
 
+  if (Platform.OS === "web") {
+    return `http://localhost:${API_PORT}`;
+  }
+
   const host = metroHost();
   if (host) {
     return `http://${host}:${API_PORT}`;

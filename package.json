@@ -7,6 +7,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "build:web": "expo export --platform web",
     "generate:icons": "node scripts/generate-brand-assets.mjs",
     "build:apk": "npx eas-cli build --platform android --profile preview",
     "build:apk:prod": "npx eas-cli build --platform android --profile production",
@@ -16,6 +17,7 @@
     "build:all": "npx eas-cli build --platform all --profile preview"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~6.1.2",
     "@expo/vector-icons": "^15.0.3",
     "@react-navigation/native": "^7.0.14",
     "@tanstack/react-query": "^5.66.9",
@@ -42,6 +44,7 @@
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
     "react-native-svg": "15.12.1",
+    "react-native-web": "^0.21.0",
     "socket.io-client": "^4.8.1",
     "zustand": "^5.0.3"
   },
