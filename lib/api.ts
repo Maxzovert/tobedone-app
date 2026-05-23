@@ -1,4 +1,6 @@
 import { ApiResponse } from "@/types";
+
+export type ApiResult<T> = ApiResponse<T> & { httpStatus?: number };
 import { getApiUrl } from "./getApiUrl";
 import { getStoredToken, setStoredToken } from "./authStorage";
 
@@ -19,7 +21,7 @@ export { getApiUrl };
 async function request<T>(
   path: string,
   options: RequestInit = {}
-): Promise<ApiResponse<T>> {
+): Promise<ApiResult<T>> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
@@ -36,10 +38,11 @@ async function request<T>(
     });
 
     const json = (await res.json()) as ApiResponse<T>;
-    return json;
+    return { ...json, httpStatus: res.status };
   } catch {
     return {
       success: false,
+      httpStatus: 0,
       error: `Cannot reach API at ${getApiUrl()}. Start the backend (npm run dev in /backend) and allow port 3000 in Windows Firewall if using a physical phone.`,
     };
   }
