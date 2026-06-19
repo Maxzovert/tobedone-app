@@ -6,7 +6,7 @@ import { useChatStore } from "@/stores/chat-store";
 import { useNotificationStore } from "@/stores/notification-store";
 import { Message, Notification } from "@/types";
 
-export function useSocketListeners() {
+export function useSocketListeners(enabled = true) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const userId = useAuthStore((s) => s.user?.id);
   const qc = useQueryClient();
@@ -17,12 +17,10 @@ export function useSocketListeners() {
   const addNotification = useNotificationStore((s) => s.addNotification);
 
   useEffect(() => {
-    if (!isAuthenticated || !userId) return;
+    if (!enabled || !isAuthenticated || !userId) return;
 
-    const socket = getSocket();
-    if (!socket) return;
-
-    socket.emit("join:user");
+    let socket = getSocket();
+    let cleaned = false;
 
     const onMessage = (msg: Message) => {
       addMessage(msg.groupId, msg);
@@ -69,20 +67,31 @@ export function useSocketListeners() {
       qc.invalidateQueries({ queryKey: ["dashboard", "home"] });
     };
 
-    socket.on("message:new", onMessage);
-    socket.on("task:updated", onTaskUpdated);
-    socket.on("typing:start", onTypingStart);
-    socket.on("typing:stop", onTypingStop);
-    socket.on("notification:new", onNotification);
+    const attach = () => {
+      if (cleaned) return;
+      socket = getSocket();
+      if (!socket) return;
+      socket.emit("join:user");
+      socket.on("message:new", onMessage);
+      socket.on("task:updated", onTaskUpdated);
+      socket.on("typing:start", onTypingStart);
+      socket.on("typing:stop", onTypingStop);
+      socket.on("notification:new", onNotification);
+    };
+
+    const timer = setTimeout(attach, 400);
 
     return () => {
-      socket.off("message:new", onMessage);
-      socket.off("typing:start", onTypingStart);
-      socket.off("typing:stop", onTypingStop);
-      socket.off("task:updated", onTaskUpdated);
-      socket.off("notification:new", onNotification);
+      cleaned = true;
+      clearTimeout(timer);
+      socket?.off("message:new", onMessage);
+      socket?.off("typing:start", onTypingStart);
+      socket?.off("typing:stop", onTypingStop);
+      socket?.off("task:updated", onTaskUpdated);
+      socket?.off("notification:new", onNotification);
     };
   }, [
+    enabled,
     isAuthenticated,
     userId,
     activeGroupId,

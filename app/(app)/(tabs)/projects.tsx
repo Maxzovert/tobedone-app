@@ -11,6 +11,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { fetchProjects } from "@/hooks/useAppDataWarmup";
 import { projectsService } from "@/services/projects.service";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuthStore } from "@/stores/auth-store";
@@ -37,14 +38,14 @@ export default function ProjectsScreen() {
   const [error, setError] = useState("");
   const [createdProject, setCreatedProject] = useState<Project | null>(null);
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const { data, isLoading, isFetching, refetch, isRefetching } = useQuery({
     queryKey: ["projects"],
-    queryFn: async () => {
-      const res = await projectsService.list();
-      if (!res.success) throw new Error(res.error);
-      return res.data!;
-    },
+    queryFn: fetchProjects,
+    staleTime: 60_000,
+    placeholderData: (previous) => previous,
   });
+
+  const showListSkeleton = !data && (isLoading || isFetching);
 
   const closeModal = () => {
     setModal(null);
@@ -128,7 +129,7 @@ export default function ProjectsScreen() {
         </View>
       </View>
 
-      {isLoading ? (
+      {showListSkeleton ? (
         <View style={styles.loading}>
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} height={88} borderRadius={radius.lg} style={{ marginBottom: spacing.sm }} />

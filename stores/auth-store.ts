@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { User } from "@/types";
-import { api, loadToken, setToken, getApiUrl } from "@/lib/api";
+import { api, loadToken, setToken } from "@/lib/api";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
 import { registerPushWithBackend, unregisterPushToken } from "@/lib/pushRegistration";
 import {
@@ -144,7 +144,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
 
     void refreshProfileInBackground(token, !!cachedUser);
-    void fetch(`${getApiUrl()}/health`).catch(() => {});
   },
 
   setUser: (user) => {

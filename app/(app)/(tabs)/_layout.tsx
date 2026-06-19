@@ -8,7 +8,8 @@ export default function TabsLayout() {
   const unread = useNotificationStore((s) => s.unreadCount);
 
   return (
-    <Tabs
+      <Tabs
+      lazy
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: theme.primary,

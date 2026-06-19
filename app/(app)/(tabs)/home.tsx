@@ -12,7 +12,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { dashboardService } from "@/services/dashboard.service";
+import { fetchHome } from "@/hooks/useAppDataWarmup";
 import { todosService } from "@/services/todos.service";
 import { tasksService } from "@/services/tasks.service";
 import { useTheme } from "@/hooks/useTheme";
@@ -35,14 +35,14 @@ export default function HomeScreen() {
     action: "accept" | "reject";
   } | null>(null);
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const { data, isLoading, isFetching, refetch, isRefetching } = useQuery({
     queryKey: ["dashboard", "home"],
-    queryFn: async () => {
-      const res = await dashboardService.home();
-      if (!res.success) throw new Error(res.error);
-      return res.data!;
-    },
+    queryFn: fetchHome,
+    staleTime: 60_000,
+    placeholderData: (previous) => previous,
   });
+
+  const showSectionSkeleton = !data && (isLoading || isFetching);
 
   const toggleTodo = useMutation({
     mutationFn: (todo: Todo) => {
@@ -106,22 +106,6 @@ export default function HomeScreen() {
     },
   });
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={[styles.screen, { backgroundColor: theme.background }]}>
-        <View style={styles.loading}>
-          <Skeleton height={48} width="70%" borderRadius={radius.md} />
-          <View style={[styles.loadingRow, { marginTop: spacing.lg }]}>
-            <Skeleton height={72} style={{ flex: 1 }} borderRadius={radius.lg} />
-            <Skeleton height={72} style={{ flex: 1 }} borderRadius={radius.lg} />
-            <Skeleton height={72} style={{ flex: 1 }} borderRadius={radius.lg} />
-          </View>
-          <Skeleton height={120} borderRadius={radius.lg} style={{ marginTop: spacing.lg }} />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   const stats = data?.stats;
   const firstName = user?.name?.split(" ")[0] || "there";
 
@@ -155,26 +139,40 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.metrics}>
-          <MetricPill
-            icon="folder-open-outline"
-            label="Projects"
-            value={stats?.projects ?? 0}
-            theme={theme}
-          />
-          <MetricPill
-            icon="time-outline"
-            label="Pending"
-            value={stats?.pendingTasks ?? 0}
-            theme={theme}
-          />
-          <MetricPill
-            icon="checkmark-done-outline"
-            label="Done"
-            value={stats?.completedTasks ?? 0}
-            theme={theme}
-          />
+          {showSectionSkeleton ? (
+            <View style={styles.loadingRow}>
+              <Skeleton height={72} style={{ flex: 1 }} borderRadius={radius.lg} />
+              <Skeleton height={72} style={{ flex: 1 }} borderRadius={radius.lg} />
+              <Skeleton height={72} style={{ flex: 1 }} borderRadius={radius.lg} />
+            </View>
+          ) : (
+            <>
+              <MetricPill
+                icon="folder-open-outline"
+                label="Projects"
+                value={stats?.projects ?? 0}
+                theme={theme}
+              />
+              <MetricPill
+                icon="time-outline"
+                label="Pending"
+                value={stats?.pendingTasks ?? 0}
+                theme={theme}
+              />
+              <MetricPill
+                icon="checkmark-done-outline"
+                label="Done"
+                value={stats?.completedTasks ?? 0}
+                theme={theme}
+              />
+            </>
+          )}
         </View>
 
+        {showSectionSkeleton ? (
+          <Skeleton height={120} borderRadius={radius.lg} style={{ marginTop: spacing.md }} />
+        ) : (
+          <>
         <SectionHeader
           title="Projects"
           count={data?.projects.length}
@@ -268,6 +266,8 @@ export default function HomeScreen() {
                 }
               />
             ))}
+          </>
+        )}
           </>
         )}
       </ScrollView>

@@ -10,6 +10,8 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { useAuthStore } from "@/stores/auth-store";
 import { useSocketListeners } from "@/hooks/useSocket";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useKeepBackendAwake } from "@/hooks/useKeepBackendAwake";
+import { useAppDataWarmup } from "@/hooks/useAppDataWarmup";
 import { useTheme } from "@/hooks/useTheme";
 import { AppBootSplash } from "@/components/ui/AppBootSplash";
 
@@ -21,8 +23,10 @@ function RootNav() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const { isDark } = useTheme();
 
-  useSocketListeners();
+  useSocketListeners(isAuthenticated && !isLoading);
   usePushNotifications(isAuthenticated);
+  useKeepBackendAwake();
+  useAppDataWarmup();
 
   useEffect(() => {
     void hydrate();

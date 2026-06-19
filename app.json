@@ -31,7 +31,7 @@
         "backgroundColor": "#f4f6fa"
       },
       "package": "com.tobedone.app",
-      "versionCode": 3,
+      "versionCode": 4,
       "softwareKeyboardLayoutMode": "resize",
       "usesCleartextTraffic": true,
       "permissions": [
