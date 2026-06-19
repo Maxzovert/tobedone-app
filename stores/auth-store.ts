@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { User } from "@/types";
-import { api, loadToken, setToken } from "@/lib/api";
+import { api, loadToken, setToken, getApiUrl } from "@/lib/api";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
 import { registerPushWithBackend, unregisterPushToken } from "@/lib/pushRegistration";
 import {
@@ -28,15 +28,59 @@ function isUnauthorized(status?: number, error?: string): boolean {
   return msg.includes("unauthorized") || msg.includes("expired token") || msg.includes("invalid");
 }
 
+function attachRealtime(token: string) {
+  setTimeout(() => {
+    connectSocket(token);
+    void registerPushWithBackend();
+  }, 0);
+}
+
 function sessionFrom(user: User, token: string) {
-  connectSocket(token);
-  void registerPushWithBackend();
+  attachRealtime(token);
   return {
     user,
     token,
     isAuthenticated: true,
     isLoading: false,
   };
+}
+
+async function refreshProfileInBackground(token: string, hadCachedUser: boolean) {
+  try {
+    const res = await api.get<User>("/profile", { timeoutMs: 12_000 });
+
+    if (res.success && res.data) {
+      await setStoredUser(res.data);
+      useAuthStore.setState({
+        user: res.data,
+        token,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+      connectSocket(token);
+      return;
+    }
+
+    if (isUnauthorized(res.httpStatus, res.error)) {
+      disconnectSocket();
+      await clearAuthStorage();
+      useAuthStore.setState({
+        isLoading: false,
+        isAuthenticated: false,
+        user: null,
+        token: null,
+      });
+      return;
+    }
+
+    if (!hadCachedUser) {
+      useAuthStore.setState({ isLoading: false, isAuthenticated: true, token });
+    }
+  } catch {
+    if (!hadCachedUser) {
+      useAuthStore.setState({ isLoading: false, isAuthenticated: true, token });
+    }
+  }
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -78,9 +122,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   hydrate: async () => {
-    set({ isLoading: true });
+    const [token, cachedUser] = await Promise.all([getStoredToken(), getStoredUser()]);
 
-    const token = await getStoredToken();
     if (!token) {
       set({ isLoading: false, isAuthenticated: false, user: null, token: null });
       return;
@@ -88,7 +131,6 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     await loadToken(token);
 
-    const cachedUser = await getStoredUser();
     if (cachedUser) {
       set(sessionFrom(cachedUser, token));
     } else {
@@ -98,34 +140,11 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: true,
         isLoading: false,
       });
-      connectSocket(token);
+      attachRealtime(token);
     }
 
-    try {
-      const res = await api.get<User>("/profile");
-
-      if (res.success && res.data) {
-        await setStoredUser(res.data);
-        set({ user: res.data, token, isAuthenticated: true, isLoading: false });
-        connectSocket(token);
-        return;
-      }
-
-      if (isUnauthorized(res.httpStatus, res.error)) {
-        disconnectSocket();
-        await clearAuthStorage();
-        set({ isLoading: false, isAuthenticated: false, user: null, token: null });
-        return;
-      }
-
-      if (!cachedUser) {
-        set({ isLoading: false, isAuthenticated: true, token });
-      }
-    } catch {
-      if (!cachedUser) {
-        set({ isLoading: false, isAuthenticated: true, token });
-      }
-    }
+    void refreshProfileInBackground(token, !!cachedUser);
+    void fetch(`${getApiUrl()}/health`).catch(() => {});
   },
 
   setUser: (user) => {

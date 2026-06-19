@@ -19,23 +19,33 @@ export async function setToken(token: string | null) {
 
 export { getApiUrl };
 
+type RequestOptions = RequestInit & { timeoutMs?: number };
+
 async function request<T>(
   path: string,
-  options: RequestInit = {}
+  options: RequestOptions = {}
 ): Promise<ApiResult<T>> {
+  const { timeoutMs, ...fetchOptions } = options;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(options.headers as Record<string, string>),
+    ...(fetchOptions.headers as Record<string, string>),
   };
 
   if (authToken) {
     headers.Authorization = `Bearer ${authToken}`;
   }
 
+  const controller = timeoutMs ? new AbortController() : null;
+  const timeoutId =
+    controller && timeoutMs
+      ? setTimeout(() => controller.abort(), timeoutMs)
+      : null;
+
   try {
     const res = await fetch(`${getApiUrl()}/api${path}`, {
-      ...options,
+      ...fetchOptions,
       headers,
+      signal: controller?.signal,
     });
 
     let json: ApiResponse<T>;
@@ -49,17 +59,26 @@ async function request<T>(
       };
     }
     return { ...json, httpStatus: res.status };
-  } catch {
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      return {
+        success: false,
+        httpStatus: 0,
+        error: "Request timed out. The server may be waking up — try again.",
+      };
+    }
     return {
       success: false,
       httpStatus: 0,
       error: `Cannot reach API at ${getApiUrl()}. Start the backend (npm run dev in /backend) and allow port 3000 in Windows Firewall if using a physical phone.`,
     };
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
 }
 
 export const api = {
-  get: <T>(path: string) => request<T>(path),
+  get: <T>(path: string, options?: RequestOptions) => request<T>(path, options),
   post: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: "POST", body: JSON.stringify(body) }),
   patch: <T>(path: string, body?: unknown) =>

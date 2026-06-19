@@ -11,6 +11,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useSocketListeners } from "@/hooks/useSocket";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useTheme } from "@/hooks/useTheme";
+import { AppBootSplash } from "@/components/ui/AppBootSplash";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -24,10 +25,23 @@ function RootNav() {
   usePushNotifications(isAuthenticated);
 
   useEffect(() => {
-    hydrate().finally(() => SplashScreen.hideAsync());
+    void hydrate();
   }, [hydrate]);
 
-  if (isLoading) return null;
+  useEffect(() => {
+    if (!isLoading) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [isLoading]);
+
+  if (isLoading) {
+    return (
+      <>
+        <StatusBar style={isDark ? "light" : "dark"} />
+        <AppBootSplash />
+      </>
+    );
+  }
 
   return (
     <>
