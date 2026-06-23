@@ -22,7 +22,9 @@
       "buildNumber": "1",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow Tobedone to access your photos to set a profile picture.",
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       }
     },
     "android": {
@@ -31,17 +33,21 @@
         "backgroundColor": "#f4f6fa"
       },
       "package": "com.tobedone.app",
-      "versionCode": 4,
+      "versionCode": 5,
       "softwareKeyboardLayoutMode": "resize",
       "usesCleartextTraffic": true,
       "permissions": [
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.VIBRATE"
       ]
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
       "expo-asset",
+      "expo-av",
+      "@react-native-community/datetimepicker",
       [
         "expo-notifications",
         {
@@ -56,7 +62,8 @@
         {
           "photosPermission": "Allow Tobedone to access your photos to set a profile picture."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "web": {
       "bundler": "metro",

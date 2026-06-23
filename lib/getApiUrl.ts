@@ -14,7 +14,12 @@ function metroHost(): string | undefined {
  */
 export function getApiUrl(): string {
   const fromEnv = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");
-  if (fromEnv) return fromEnv;
+  if (fromEnv) {
+    if (__DEV__ && Platform.OS === "web" && process.env.EXPO_PUBLIC_USE_LOCAL_API === "true") {
+      return `http://localhost:${API_PORT}`;
+    }
+    return fromEnv;
+  }
 
   if (Platform.OS === "web") {
     return `http://localhost:${API_PORT}`;

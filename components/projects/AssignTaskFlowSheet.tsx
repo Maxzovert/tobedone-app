@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { TaskAssignKindModal, AssignTaskKind } from "@/components/projects/TaskAssignKindModal";
 import { KeyboardBottomSheet } from "@/components/ui/KeyboardBottomSheet";
+import { PriorityPicker, TaskPriority } from "@/components/tasks/PriorityPicker";
+import { DueDateTimePicker } from "@/components/tasks/DueDateTimePicker";
 import { spacing, radius, typography } from "@/constants/theme";
 
 type Step = "kind" | "form";
@@ -16,12 +18,16 @@ export type GroupTaskPayload = {
   groupId: string;
   title: string;
   description?: string;
+  priority?: TaskPriority;
+  dueDate?: string | null;
 };
 
 export type IndividualTaskPayload = {
   groupId: string;
   member: ProjectMember;
   title: string;
+  priority?: TaskPriority;
+  dueDate?: string | null;
 };
 
 interface Props {
@@ -56,6 +62,8 @@ export function AssignTaskFlowSheet({
   const [description, setDescription] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedMember, setSelectedMember] = useState<ProjectMember | null>(null);
+  const [priority, setPriority] = useState<TaskPriority>("medium");
+  const [dueDate, setDueDate] = useState<Date | null>(null);
 
   const postableGroups = useMemo(
     () => discussionGroups.filter((g) => isOwner || g.groupType !== "admin"),
@@ -71,6 +79,8 @@ export function AssignTaskFlowSheet({
     setDescription("");
     setSelectedGroupId(null);
     setSelectedMember(null);
+    setPriority("medium");
+    setDueDate(null);
   };
 
   useEffect(() => {
@@ -109,12 +119,16 @@ export function AssignTaskFlowSheet({
         groupId: selectedGroupId,
         title: title.trim(),
         description: description.trim() || undefined,
+        priority,
+        dueDate: dueDate ? dueDate.toISOString() : null,
       });
     } else if (kind === "individual" && selectedMember) {
       onSubmitIndividual({
         groupId: selectedGroupId,
         member: selectedMember,
         title: title.trim(),
+        priority,
+        dueDate: dueDate ? dueDate.toISOString() : null,
       });
     }
   };
@@ -244,6 +258,8 @@ export function AssignTaskFlowSheet({
                     multiline
                   />
                 )}
+                <PriorityPicker value={priority} onChange={setPriority} />
+                <DueDateTimePicker value={dueDate} onChange={setDueDate} />
                 {error ? <Text style={[styles.errorText, { color: theme.danger }]}>{error}</Text> : null}
                 <Button
                   title={kind === "group" ? "Add to team todos" : "Assign & notify"}

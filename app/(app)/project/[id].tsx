@@ -107,10 +107,14 @@ export default function ProjectDetailScreen() {
       groupId: string;
       title: string;
       description?: string;
+      priority?: string;
+      dueDate?: string | null;
     }) => {
       const taskRes = await projectsService.createProjectTask(id!, {
         title: payload.title,
         description: payload.description,
+        priority: payload.priority,
+        dueDate: payload.dueDate,
       });
       if (!taskRes.success || !taskRes.data) throw new Error(taskRes.error || "Failed to create task");
       return messagesService.send({
@@ -140,6 +144,8 @@ export default function ProjectDetailScreen() {
       groupId: string;
       member: { user: { id: string; name: string } };
       title: string;
+      priority?: string;
+      dueDate?: string | null;
     }) => {
       const detail = qc.getQueryData<ProjectDetail>(["project", id]);
       const bucketId = detail?.taskBucketId;
@@ -153,6 +159,8 @@ export default function ProjectDetailScreen() {
           title: payload.title,
           assignedTo: payload.member.user.id,
           taskGroupId: bucketId,
+          priority: payload.priority,
+          dueDate: payload.dueDate,
         },
       });
     },

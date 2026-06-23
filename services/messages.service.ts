@@ -18,6 +18,8 @@ export const messagesService = {
       title: string;
       assignedTo: string;
       taskGroupId: string;
+      priority?: string;
+      dueDate?: string | null;
     };
   }) => api.post<Message>("/messages", data),
   react: (messageId: string, emoji: string) =>

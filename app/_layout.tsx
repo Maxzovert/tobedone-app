@@ -12,6 +12,8 @@ import { useSocketListeners } from "@/hooks/useSocket";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useKeepBackendAwake } from "@/hooks/useKeepBackendAwake";
 import { useAppDataWarmup } from "@/hooks/useAppDataWarmup";
+import { UrgentAlarmHost } from "@/hooks/useUrgentTaskAlarm";
+import { useTaskLocalReminders } from "@/hooks/useTaskLocalReminders";
 import { useTheme } from "@/hooks/useTheme";
 import { AppBootSplash } from "@/components/ui/AppBootSplash";
 
@@ -25,6 +27,7 @@ function RootNav() {
 
   useSocketListeners(isAuthenticated && !isLoading);
   usePushNotifications(isAuthenticated);
+  useTaskLocalReminders(isAuthenticated && !isLoading);
   useKeepBackendAwake();
   useAppDataWarmup();
 
@@ -50,6 +53,7 @@ function RootNav() {
   return (
     <>
       <StatusBar style={isDark ? "light" : "dark"} />
+      <UrgentAlarmHost enabled={isAuthenticated && !isLoading} />
       <Stack screenOptions={{ headerShown: false }}>
         {isAuthenticated ? (
           <Stack.Screen name="(app)" />

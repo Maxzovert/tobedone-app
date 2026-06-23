@@ -46,7 +46,9 @@ export default function HomeScreen() {
 
   const toggleTodo = useMutation({
     mutationFn: (todo: Todo) => {
-      if (todo.task?.status === "pending") return Promise.resolve(todo);
+      if (todo.task?.status === "pending") {
+        return Promise.resolve({ success: true as const, data: todo });
+      }
       if (todo.task?.status === "in_progress") {
         return todosService.update(todo.id, {
           taskStatus: todo.completed ? "in_progress" : "completed",

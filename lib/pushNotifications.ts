@@ -1,4 +1,4 @@
-import { Platform } from "react-native";
+import { Platform, PermissionsAndroid } from "react-native";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
@@ -13,6 +13,17 @@ Notifications.setNotificationHandler({
   }),
 });
 
+async function ensureAndroidPostNotifications() {
+  if (Platform.OS !== "android" || Platform.Version < 33) return;
+  try {
+    await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
 export async function ensureAndroidChannel() {
   if (Platform.OS !== "android") return;
   await Notifications.setNotificationChannelAsync("default", {
@@ -20,6 +31,19 @@ export async function ensureAndroidChannel() {
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: "#6366f1",
+    sound: "default",
+  });
+}
+
+export async function ensureUrgentChannel() {
+  if (Platform.OS !== "android") return;
+  await Notifications.setNotificationChannelAsync("urgent", {
+    name: "Urgent tasks",
+    importance: Notifications.AndroidImportance.MAX,
+    vibrationPattern: [0, 500, 250, 500, 250, 500],
+    lightColor: "#ef4444",
+    sound: "default",
+    bypassDnd: true,
   });
 }
 
@@ -28,7 +52,9 @@ export async function requestPushPermissions(): Promise<boolean> {
     return false;
   }
 
+  await ensureAndroidPostNotifications();
   await ensureAndroidChannel();
+  await ensureUrgentChannel();
 
   const { status: existing } = await Notifications.getPermissionsAsync();
   let finalStatus = existing;

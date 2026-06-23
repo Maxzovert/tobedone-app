@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import {
   Modal,
   View,
@@ -9,6 +9,7 @@ import {
   ScrollView,
   StyleProp,
   ViewStyle,
+  Keyboard,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/hooks/useTheme";
@@ -32,6 +33,24 @@ export function KeyboardBottomSheet({
 }: Props) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0));
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   return (
     <Modal visible={visible} transparent animationType={animationType} onRequestClose={onClose}>
@@ -41,15 +60,16 @@ export function KeyboardBottomSheet({
           onPress={onClose}
         />
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior="padding"
           style={styles.keyboardView}
+          keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
         >
           <View
             style={[
               styles.sheet,
               {
                 backgroundColor: theme.surface,
-                paddingBottom: Math.max(insets.bottom, spacing.md),
+                paddingBottom: Math.max(insets.bottom, spacing.md) + keyboardHeight * 0.15,
               },
               sheetStyle,
             ]}

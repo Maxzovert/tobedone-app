@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   title: { ...typography.h2 },
-  content: { padding: spacing.md, paddingBottom: spacing.xxl },
+  content: { padding: spacing.md, paddingBottom: spacing.xl * 2 },
   section: { ...typography.caption, marginBottom: spacing.sm, textTransform: "uppercase" },
   hint: { ...typography.caption, marginBottom: spacing.md },
   error: { ...typography.caption, marginBottom: spacing.sm, textAlign: "center" },

@@ -50,12 +50,33 @@ async function request<T>(
 
     let json: ApiResponse<T>;
     try {
-      json = (await res.json()) as ApiResponse<T>;
+      const text = await res.text();
+      if (!text) {
+        return {
+          success: false,
+          httpStatus: res.status,
+          error:
+            res.status === 404
+              ? "This feature is not available on the server yet. Deploy the latest backend."
+              : `Server returned ${res.status} with an empty response.`,
+        };
+      }
+      json = JSON.parse(text) as ApiResponse<T>;
     } catch {
       return {
         success: false,
         httpStatus: res.status,
-        error: "Invalid server response",
+        error:
+          res.status === 404
+            ? "Endpoint not found. Deploy the latest backend to Render."
+            : `Invalid server response (${res.status}).`,
+      };
+    }
+    if (!res.ok && json.success !== false && !json.error) {
+      return {
+        success: false,
+        httpStatus: res.status,
+        error: json.error || `Request failed (${res.status})`,
       };
     }
     return { ...json, httpStatus: res.status };

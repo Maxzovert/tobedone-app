@@ -9,7 +9,6 @@ export default function TabsLayout() {
 
   return (
       <Tabs
-      lazy
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: theme.primary,

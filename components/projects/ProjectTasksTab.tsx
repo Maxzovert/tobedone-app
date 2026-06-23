@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -7,24 +7,31 @@ import {
   FlatList,
   RefreshControl,
   ActivityIndicator,
+  Alert,
+  Animated,
 } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { projectsService } from "@/services/projects.service";
 import { todosService } from "@/services/todos.service";
+import { tasksService } from "@/services/tasks.service";
 import { ProjectTask } from "@/types";
 import { useTheme } from "@/hooks/useTheme";
 import { spacing, typography, radius } from "@/constants/theme";
+import { formatDueDate } from "@/components/tasks/DueDateTimePicker";
+import { priorityColor, priorityLabel } from "@/components/tasks/PriorityPicker";
+import { TaskEditSheet } from "@/components/tasks/TaskEditSheet";
 
 type Props = {
   projectId: string;
-  /** When true, list refetches (project Tasks tab is visible). */
   active?: boolean;
 };
 
 export function ProjectTasksTab({ projectId, active = true }: Props) {
   const { theme } = useTheme();
   const qc = useQueryClient();
+  const [editTask, setEditTask] = useState<ProjectTask | null>(null);
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ["project", projectId, "tasks"],
@@ -73,6 +80,26 @@ export function ProjectTasksTab({ projectId, active = true }: Props) {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (taskId: string) => tasksService.delete(taskId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["project", projectId, "tasks"] });
+      qc.invalidateQueries({ queryKey: ["todos"] });
+      qc.invalidateQueries({ queryKey: ["dashboard", "home"] });
+    },
+  });
+
+  const confirmDelete = (task: ProjectTask) => {
+    Alert.alert("Delete task", `Remove "${task.title}" for the whole team?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => deleteMutation.mutate(task.id),
+      },
+    ]);
+  };
+
   if (isLoading) {
     return (
       <View style={styles.centered}>
@@ -82,39 +109,113 @@ export function ProjectTasksTab({ projectId, active = true }: Props) {
   }
 
   return (
-    <FlatList
-      style={styles.list}
-      data={data ?? []}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={[
-        styles.listContent,
-        !(data?.length) && styles.listContentEmpty,
-      ]}
-      refreshControl={
-        <RefreshControl
-          refreshing={isRefetching}
-          onRefresh={() => refetch()}
-          tintColor={theme.primary}
-          colors={[theme.primary]}
-        />
-      }
-      ListEmptyComponent={
-        <View style={[styles.empty, { borderColor: theme.border }]}>
-          <Ionicons name="people-outline" size={32} color={theme.textSecondary} />
-          <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-            No project tasks yet. Tap + to assign a team task.
-          </Text>
-        </View>
-      }
-      renderItem={({ item }) => (
-        <ProjectTaskRow
-          task={item}
-          theme={theme}
-          onToggle={() => toggleMutation.mutate(item)}
-          busy={toggleMutation.isPending}
-        />
-      )}
-    />
+    <>
+      <FlatList
+        style={styles.list}
+        data={data ?? []}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={[
+          styles.listContent,
+          !(data?.length) && styles.listContentEmpty,
+        ]}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => refetch()}
+            tintColor={theme.primary}
+            colors={[theme.primary]}
+          />
+        }
+        ListEmptyComponent={
+          <View style={[styles.empty, { borderColor: theme.border }]}>
+            <Ionicons name="people-outline" size={32} color={theme.textSecondary} />
+            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+              No project tasks yet. Tap + to assign a team task.
+            </Text>
+          </View>
+        }
+        renderItem={({ item }) => (
+          <SwipeableTaskRow
+            task={item}
+            theme={theme}
+            onToggle={() => toggleMutation.mutate(item)}
+            onEdit={() => setEditTask(item)}
+            onDelete={() => confirmDelete(item)}
+            busy={toggleMutation.isPending || deleteMutation.isPending}
+          />
+        )}
+      />
+
+      <TaskEditSheet
+        visible={!!editTask}
+        task={editTask}
+        onClose={() => setEditTask(null)}
+        onSaved={() => {
+          qc.invalidateQueries({ queryKey: ["project", projectId, "tasks"] });
+          qc.invalidateQueries({ queryKey: ["todos"] });
+          qc.invalidateQueries({ queryKey: ["dashboard", "home"] });
+        }}
+      />
+    </>
+  );
+}
+
+function SwipeableTaskRow({
+  task,
+  theme,
+  onToggle,
+  onEdit,
+  onDelete,
+  busy,
+}: {
+  task: ProjectTask;
+  theme: ReturnType<typeof useTheme>["theme"];
+  onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  busy: boolean;
+}) {
+  const swipeRef = useRef<Swipeable>(null);
+
+  const renderRight = (
+    _progress: Animated.AnimatedInterpolation<number>,
+    dragX: Animated.AnimatedInterpolation<number>
+  ) => {
+    const scale = dragX.interpolate({
+      inputRange: [-80, 0],
+      outputRange: [1, 0.5],
+      extrapolate: "clamp",
+    });
+    return (
+      <Pressable
+        onPress={() => {
+          swipeRef.current?.close();
+          onDelete();
+        }}
+        style={[styles.deleteAction, { backgroundColor: theme.danger }]}
+      >
+        <Animated.View style={{ transform: [{ scale }] }}>
+          <Ionicons name="trash-outline" size={24} color="#fff" />
+        </Animated.View>
+      </Pressable>
+    );
+  };
+
+  return (
+    <Swipeable
+      ref={swipeRef}
+      renderRightActions={renderRight}
+      overshootRight={false}
+      friction={2}
+    >
+      <ProjectTaskRow
+        task={task}
+        theme={theme}
+        onToggle={onToggle}
+        onEdit={onEdit}
+        busy={busy}
+      />
+    </Swipeable>
   );
 }
 
@@ -122,35 +223,38 @@ function ProjectTaskRow({
   task,
   theme,
   onToggle,
+  onEdit,
   busy,
 }: {
   task: ProjectTask;
   theme: ReturnType<typeof useTheme>["theme"];
   onToggle: () => void;
+  onEdit: () => void;
   busy: boolean;
 }) {
   const allDone = task.memberCount > 0 && task.completedCount === task.memberCount;
   const progress = `${task.completedCount}/${task.memberCount} done`;
+  const due = formatDueDate(task.dueDate);
+  const pColor = priorityColor(task.priority);
 
   return (
-    <Pressable
-      onPress={onToggle}
-      disabled={busy || !task.myTodoId}
-      style={({ pressed }) => [
+    <View
+      style={[
         styles.row,
         {
           backgroundColor: theme.surface,
           borderColor: theme.border,
-          opacity: pressed ? 0.92 : 1,
         },
       ]}
     >
-      <Ionicons
-        name={task.myCompleted ? "checkbox" : "square-outline"}
-        size={24}
-        color={task.myCompleted ? theme.success : theme.primary}
-      />
-      <View style={styles.body}>
+      <Pressable onPress={onToggle} disabled={busy || !task.myTodoId} hitSlop={4}>
+        <Ionicons
+          name={task.myCompleted ? "checkbox" : "square-outline"}
+          size={24}
+          color={task.myCompleted ? theme.success : theme.primary}
+        />
+      </Pressable>
+      <Pressable onPress={onEdit} style={styles.body} disabled={busy}>
         <Text
           style={[
             styles.taskTitle,
@@ -169,9 +273,20 @@ function ProjectTaskRow({
           </Text>
         ) : null}
         <View style={styles.meta}>
+          <View style={[styles.badge, { backgroundColor: pColor + "18" }]}>
+            <Text style={[styles.badgeText, { color: pColor }]}>
+              {priorityLabel(task.priority)}
+            </Text>
+          </View>
+          {due ? (
+            <View style={[styles.badge, { backgroundColor: theme.primary + "14" }]}>
+              <Ionicons name="time-outline" size={11} color={theme.primary} />
+              <Text style={[styles.badgeText, { color: theme.primary }]}>{due}</Text>
+            </View>
+          ) : null}
           <View style={[styles.badge, { backgroundColor: theme.primary + "14" }]}>
             <Ionicons name="people" size={12} color={theme.primary} />
-            <Text style={[styles.badgeText, { color: theme.primary }]}>Team task</Text>
+            <Text style={[styles.badgeText, { color: theme.primary }]}>Team</Text>
           </View>
           <Text style={[styles.progress, { color: allDone ? theme.success : theme.textSecondary }]}>
             {progress}
@@ -182,8 +297,11 @@ function ProjectTaskRow({
             </Text>
           ) : null}
         </View>
-      </View>
-    </Pressable>
+      </Pressable>
+      <Pressable onPress={onEdit} hitSlop={8}>
+        <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
+      </Pressable>
+    </View>
   );
 }
 
@@ -202,6 +320,14 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
   },
   emptyText: { ...typography.caption, textAlign: "center" },
+  deleteAction: {
+    width: 72,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: spacing.md,
+    borderRadius: radius.lg,
+    marginVertical: 0,
+  },
   row: {
     flexDirection: "row",
     alignItems: "flex-start",

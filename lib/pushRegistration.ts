@@ -15,7 +15,7 @@ export async function registerPushWithBackend(): Promise<void> {
   if (!granted) return;
 
   const token = await getExpoPushToken();
-  if (!token || lastRegisteredToken === token) return;
+  if (!token) return;
 
   const res = await notificationsService.registerPushToken(token, pushPlatform());
   if (res.success) lastRegisteredToken = token;

@@ -57,7 +57,9 @@ export default function TodosScreen() {
       if (todo.task?.scope === "project") {
         return todosService.update(todo.id, { completed: !todo.completed });
       }
-      if (todo.task?.status === "pending") return Promise.resolve(todo);
+      if (todo.task?.status === "pending") {
+        return Promise.resolve({ success: true as const, data: todo });
+      }
       if (todo.task && todo.task.status === "in_progress") {
         const next = todo.completed ? "in_progress" : "completed";
         return todosService.update(todo.id, { taskStatus: next });
@@ -65,7 +67,7 @@ export default function TodosScreen() {
       return todosService.update(todo.id, { completed: !todo.completed });
     },
     onMutate: async (todo) => {
-      if (todo.task?.status === "pending" && todo.task.scope !== "project") return;
+      if (todo.task?.status === "pending" && todo.task.scope !== "project") return {};
       await qc.cancelQueries({ queryKey: ["todos"] });
       const prev = qc.getQueryData<Todo[]>(["todos"]);
       const nextCompleted = !todo.completed;
@@ -90,7 +92,7 @@ export default function TodosScreen() {
       );
       return { prev };
     },
-    onError: (_e, _v, ctx) => {
+    onError: (_e, _v, ctx?: { prev?: Todo[] }) => {
       if (ctx?.prev) qc.setQueryData(["todos"], ctx.prev);
     },
     onSettled: () => {
@@ -146,7 +148,7 @@ export default function TodosScreen() {
       if (detailTodo?.id === id) setDetailTodo(null);
       return { prev };
     },
-    onError: (_e, _v, ctx) => {
+    onError: (_e, _v, ctx?: { prev?: Todo[] }) => {
       if (ctx?.prev) qc.setQueryData(["todos"], ctx.prev);
     },
   });

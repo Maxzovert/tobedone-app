@@ -63,10 +63,12 @@ export default function NotificationsScreen() {
             onPress={() => !item.read && markReadMutation.mutate(item.id)}
           >
             <GlassCard
-              style={[
-                styles.card,
-                !item.read && { borderColor: theme.primary, borderWidth: 1 },
-              ]}
+              style={{
+                ...styles.card,
+                ...(!item.read
+                  ? { borderColor: theme.primary, borderWidth: 1 }
+                  : {}),
+              }}
             >
               <Text style={[styles.notifTitle, { color: theme.text }]}>
                 {item.title}

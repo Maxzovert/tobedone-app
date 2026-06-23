@@ -6,6 +6,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { AuthKeyboardLayout } from "@/components/auth/AuthKeyboardLayout";
+import { ForgotPasswordModal } from "@/components/auth/ForgotPasswordModal";
 import { gradients, spacing, typography } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { getApiUrl } from "@/lib/getApiUrl";
@@ -19,6 +20,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
 
   const handleLogin = async () => {
     setError("");
@@ -61,6 +63,9 @@ export default function LoginScreen() {
             placeholder="••••••••"
             secureTextEntry
           />
+          <Pressable onPress={() => setForgotOpen(true)} style={styles.forgotWrap}>
+            <Text style={[styles.forgot, { color: theme.primary }]}>Forgot password?</Text>
+          </Pressable>
           {error ? (
             <Text style={[styles.error, { color: theme.danger }]}>{error}</Text>
           ) : null}
@@ -83,6 +88,12 @@ export default function LoginScreen() {
           </Text>
         </Pressable>
       </AuthKeyboardLayout>
+
+      <ForgotPasswordModal
+        visible={forgotOpen}
+        initialEmail={email}
+        onClose={() => setForgotOpen(false)}
+      />
     </LinearGradient>
   );
 }
@@ -109,6 +120,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   form: { marginTop: spacing.lg },
+  forgotWrap: { alignSelf: "flex-end", marginTop: -spacing.xs, marginBottom: spacing.sm },
+  forgot: { fontSize: 14, fontWeight: "600" },
   error: { marginBottom: spacing.sm },
   devHint: { ...typography.small, textAlign: "center", marginTop: spacing.md },
   linkWrap: { marginTop: spacing.lg, alignItems: "center", marginBottom: spacing.md },

@@ -189,8 +189,8 @@ export function ChatInput({
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={Platform.OS === "ios" ? insets.bottom : 0}
+      behavior="padding"
+      keyboardVerticalOffset={Platform.OS === "ios" ? insets.bottom + 8 : 24}
     >
       <View
         style={[

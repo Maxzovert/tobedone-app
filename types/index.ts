@@ -133,10 +133,13 @@ export interface Message {
 export type ChatSendPayload = {
   content: string;
   mentionedUserIds: string[];
+  linkedTaskId?: string;
   assignTask?: {
     title: string;
     assignedTo: string;
     taskGroupId: string;
+    priority?: string;
+    dueDate?: string | null;
   };
 };
 

@@ -25,6 +25,11 @@ export const projectsService = {
     api.get<ProjectTask[]>(`/projects/${projectId}/tasks`),
   createProjectTask: (
     projectId: string,
-    data: { title: string; description?: string; priority?: string }
+    data: {
+      title: string;
+      description?: string;
+      priority?: string;
+      dueDate?: string | null;
+    }
   ) => api.post<ProjectTask>(`/projects/${projectId}/tasks`, data),
 };
