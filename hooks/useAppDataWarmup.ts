@@ -1,36 +1,13 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/auth-store";
-import { dashboardService } from "@/services/dashboard.service";
-import { projectsService } from "@/services/projects.service";
-import { todosService } from "@/services/todos.service";
 import {
   queryCacheKeys,
   readQueryCache,
-  writeQueryCache,
 } from "@/lib/queryCacheStorage";
+import { fetchHome, fetchProjects, fetchTodos } from "@/lib/fetchQueries";
+import { fetchNotifications } from "@/hooks/useNotificationsQuery";
 import { HomeData, Project, Todo } from "@/types";
-
-async function fetchHome(): Promise<HomeData> {
-  const res = await dashboardService.home();
-  if (!res.success || !res.data) throw new Error(res.error || "Failed to load home");
-  void writeQueryCache(queryCacheKeys.home, res.data);
-  return res.data;
-}
-
-async function fetchProjects(): Promise<Project[]> {
-  const res = await projectsService.list();
-  if (!res.success || !res.data) throw new Error(res.error || "Failed to load projects");
-  void writeQueryCache(queryCacheKeys.projects, res.data);
-  return res.data;
-}
-
-async function fetchTodos(): Promise<Todo[]> {
-  const res = await todosService.list();
-  if (!res.success || !res.data) throw new Error(res.error || "Failed to load todos");
-  void writeQueryCache(queryCacheKeys.todos, res.data);
-  return res.data;
-}
 
 /**
  * Restores cached lists instantly, then refreshes in the background.
@@ -68,6 +45,11 @@ export function useAppDataWarmup() {
         queryFn: fetchProjects,
         staleTime: 60_000,
       });
+      void qc.prefetchQuery({
+        queryKey: ["notifications"],
+        queryFn: fetchNotifications,
+        staleTime: 60_000,
+      });
     })();
 
     return () => {
@@ -76,4 +58,4 @@ export function useAppDataWarmup() {
   }, [authLoading, isAuthenticated, qc]);
 }
 
-export { fetchHome, fetchProjects, fetchTodos };
+export { fetchHome, fetchProjects, fetchTodos } from "@/lib/fetchQueries";

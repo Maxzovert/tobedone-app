@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { useAuthStore } from "@/stores/auth-store";
 import { useSocketListeners } from "@/hooks/useSocket";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useBackgroundAccess } from "@/hooks/useBackgroundAccess";
 import { useKeepBackendAwake } from "@/hooks/useKeepBackendAwake";
 import { useAppDataWarmup } from "@/hooks/useAppDataWarmup";
 import { UrgentAlarmHost } from "@/hooks/useUrgentTaskAlarm";
@@ -27,6 +28,7 @@ function RootNav() {
 
   useSocketListeners(isAuthenticated && !isLoading);
   usePushNotifications(isAuthenticated);
+  useBackgroundAccess(isAuthenticated && !isLoading);
   useTaskLocalReminders(isAuthenticated && !isLoading);
   useKeepBackendAwake();
   useAppDataWarmup();

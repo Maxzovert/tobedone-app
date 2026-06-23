@@ -1,9 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getSocket } from "@/lib/socket";
 import { useAuthStore } from "@/stores/auth-store";
 import { useChatStore } from "@/stores/chat-store";
-import { useNotificationStore } from "@/stores/notification-store";
+import { mergeNotificationIntoCache } from "@/lib/notificationsCache";
 import { Message, Notification } from "@/types";
 
 export function useSocketListeners(enabled = true) {
@@ -14,7 +14,6 @@ export function useSocketListeners(enabled = true) {
   const updateLinkedTask = useChatStore((s) => s.updateLinkedTask);
   const activeGroupId = useChatStore((s) => s.activeGroupId);
   const setTyping = useChatStore((s) => s.setTyping);
-  const addNotification = useNotificationStore((s) => s.addNotification);
 
   useEffect(() => {
     if (!enabled || !isAuthenticated || !userId) return;
@@ -50,7 +49,7 @@ export function useSocketListeners(enabled = true) {
     };
 
     const onNotification = (n: Notification) => {
-      addNotification(n);
+      mergeNotificationIntoCache(qc, n);
     };
 
     const onTaskUpdated = ({
@@ -98,7 +97,6 @@ export function useSocketListeners(enabled = true) {
     addMessage,
     updateLinkedTask,
     setTyping,
-    addNotification,
     qc,
   ]);
 }

@@ -66,7 +66,7 @@ async function scheduleForTodo(todo: Todo) {
     });
   }
 
-  const nudgeAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+  const nudgeAt = new Date(Date.now() + 60 * 60 * 1000);
   await Notifications.scheduleNotificationAsync({
     identifier: `nudge-${taskId}`,
     content: {

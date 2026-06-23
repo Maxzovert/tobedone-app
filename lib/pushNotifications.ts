@@ -13,7 +13,7 @@ Notifications.setNotificationHandler({
   }),
 });
 
-async function ensureAndroidPostNotifications() {
+export async function ensureAndroidPostNotifications() {
   if (Platform.OS !== "android" || Platform.Version < 33) return;
   try {
     await PermissionsAndroid.request(
@@ -59,7 +59,13 @@ export async function requestPushPermissions(): Promise<boolean> {
   const { status: existing } = await Notifications.getPermissionsAsync();
   let finalStatus = existing;
   if (existing !== "granted") {
-    const { status } = await Notifications.requestPermissionsAsync();
+    const { status } = await Notifications.requestPermissionsAsync({
+      ios: {
+        allowAlert: true,
+        allowBadge: true,
+        allowSound: true,
+      },
+    });
     finalStatus = status;
   }
   return finalStatus === "granted";

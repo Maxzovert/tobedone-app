@@ -1,14 +1,12 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/hooks/useTheme";
-import { useNotificationStore } from "@/stores/notification-store";
 
 export default function TabsLayout() {
   const { theme, isDark } = useTheme();
-  const unread = useNotificationStore((s) => s.unreadCount);
 
   return (
-      <Tabs
+    <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: theme.primary,
@@ -23,6 +21,8 @@ export default function TabsLayout() {
           shadowOpacity: isDark ? 0 : 0.06,
           shadowRadius: 8,
         },
+        tabBarItemStyle: { flex: 1, minWidth: 0 },
+        tabBarLabelStyle: { fontSize: 11 },
       }}
     >
       <Tabs.Screen
@@ -47,19 +47,25 @@ export default function TabsLayout() {
         name="todos"
         options={{
           title: "Todos",
+          tabBarLabel: "Todos",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="checkbox" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
+        name="calendar"
+        options={{
+          title: "Calendar",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="calendar" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="notifications"
         options={{
-          title: "Alerts",
-          tabBarBadge: unread > 0 ? unread : undefined,
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="notifications" size={size} color={color} />
-          ),
+          href: null,
         }}
       />
     </Tabs>

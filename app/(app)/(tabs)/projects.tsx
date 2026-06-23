@@ -11,11 +11,12 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { fetchProjects } from "@/hooks/useAppDataWarmup";
+import { fetchProjects } from "@/lib/fetchQueries";
 import { projectsService } from "@/services/projects.service";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuthStore } from "@/stores/auth-store";
 import { ProjectListItem } from "@/components/projects/ProjectListItem";
+import { AppHeaderActions } from "@/components/ui/AppHeaderActions";
 import { IconPicker, DEFAULT_PROJECT_ICON } from "@/components/projects/IconPicker";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -104,6 +105,9 @@ export default function ProjectsScreen() {
 
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: theme.background }]}>
+      <View style={styles.topBar}>
+        <AppHeaderActions />
+      </View>
       <View style={styles.header}>
         <View>
           <Text style={[styles.title, { color: theme.text }]}>Projects</Text>
@@ -269,6 +273,12 @@ export default function ProjectsScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  topBar: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",

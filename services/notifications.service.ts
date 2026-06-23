@@ -8,6 +8,8 @@ export const notificationsService = {
     ),
   markRead: (id: string) => api.patch<Notification>("/notifications/read", { id }),
   markAllRead: () => api.patch<{ success: boolean }>("/notifications/read-all"),
+  delete: (id: string) => api.delete<{ deleted: boolean; id: string }>(`/notifications/${id}`),
+  deleteAll: () => api.delete<{ deleted: boolean }>("/notifications/all"),
   registerPushToken: (token: string, platform: string) =>
     api.post<{ registered: boolean }>("/notifications/push-token", {
       token,

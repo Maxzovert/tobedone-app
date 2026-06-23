@@ -4,10 +4,10 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  FlatList,
   RefreshControl,
   ActivityIndicator,
   Alert,
+  FlatList,
 } from "react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
@@ -117,6 +117,8 @@ export function ProjectTasksTab({ projectId, active = true }: Props) {
           styles.listContent,
           !(data?.length) && styles.listContentEmpty,
         ]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -143,6 +145,7 @@ export function ProjectTasksTab({ projectId, active = true }: Props) {
               theme={theme}
               onToggle={() => toggleMutation.mutate(item)}
               onEdit={() => setEditTask(item)}
+              onDelete={() => confirmDelete(item)}
               busy={toggleMutation.isPending || deleteMutation.isPending}
             />
           </SwipeToDeleteRow>
@@ -168,12 +171,14 @@ function ProjectTaskRow({
   theme,
   onToggle,
   onEdit,
+  onDelete,
   busy,
 }: {
   task: ProjectTask;
   theme: ReturnType<typeof useTheme>["theme"];
   onToggle: () => void;
   onEdit: () => void;
+  onDelete: () => void;
   busy: boolean;
 }) {
   const allDone = task.memberCount > 0 && task.completedCount === task.memberCount;
@@ -198,7 +203,13 @@ function ProjectTaskRow({
           color={task.myCompleted ? theme.success : theme.primary}
         />
       </Pressable>
-      <Pressable onPress={onEdit} style={styles.body} disabled={busy}>
+      <Pressable
+        onPress={onEdit}
+        onLongPress={onDelete}
+        delayLongPress={400}
+        style={styles.body}
+        disabled={busy}
+      >
         <Text
           style={[
             styles.taskTitle,
@@ -280,6 +291,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: radius.lg,
     borderWidth: 1,
+    backgroundColor: "transparent",
   },
   body: { flex: 1, minWidth: 0 },
   taskTitle: { ...typography.body, fontWeight: "600" },

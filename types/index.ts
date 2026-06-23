@@ -150,6 +150,7 @@ export interface Notification {
   title: string;
   body: string | null;
   type: string;
+  data?: Record<string, string> | null;
   read: boolean;
   createdAt: string;
 }

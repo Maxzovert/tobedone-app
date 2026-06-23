@@ -1,15 +1,10 @@
-import { ReactNode, useRef } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Platform,
-  Animated,
-} from "react-native";
-import { Swipeable, RectButton } from "react-native-gesture-handler";
+import { ReactNode, useRef, useCallback } from "react";
+import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
+import Swipeable from "react-native-gesture-handler/Swipeable";
 import { Ionicons } from "@expo/vector-icons";
 import { spacing, radius } from "@/constants/theme";
+
+const ACTION_WIDTH = 96;
 
 type Props = {
   children: ReactNode;
@@ -25,6 +20,11 @@ export function SwipeToDeleteRow({
   dangerColor = "#ef4444",
 }: Props) {
   const swipeRef = useRef<Swipeable>(null);
+
+  const handleDelete = useCallback(() => {
+    swipeRef.current?.close();
+    onDelete();
+  }, [onDelete]);
 
   if (!enabled) {
     return <View style={styles.wrap}>{children}</View>;
@@ -46,31 +46,17 @@ export function SwipeToDeleteRow({
     );
   }
 
-  const renderRightActions = (
-    _progress: Animated.AnimatedInterpolation<number>,
-    dragX: Animated.AnimatedInterpolation<number>
-  ) => {
-    const translateX = dragX.interpolate({
-      inputRange: [-88, 0],
-      outputRange: [0, 88],
-      extrapolate: "clamp",
-    });
-
-    return (
-      <Animated.View style={[styles.actions, { transform: [{ translateX }] }]}>
-        <RectButton
-          style={[styles.deleteBtn, { backgroundColor: dangerColor }]}
-          onPress={() => {
-            swipeRef.current?.close();
-            onDelete();
-          }}
-        >
-          <Ionicons name="trash-outline" size={22} color="#fff" />
-          <Text style={styles.deleteLabel}>Delete</Text>
-        </RectButton>
-      </Animated.View>
-    );
-  };
+  const renderRightActions = () => (
+    <View style={[styles.actionWrap, { width: ACTION_WIDTH }]}>
+      <Pressable
+        style={[styles.deleteBtn, { backgroundColor: dangerColor }]}
+        onPress={handleDelete}
+      >
+        <Ionicons name="trash-outline" size={22} color="#fff" />
+        <Text style={styles.deleteLabel}>Delete</Text>
+      </Pressable>
+    </View>
+  );
 
   return (
     <View style={styles.wrap}>
@@ -78,9 +64,9 @@ export function SwipeToDeleteRow({
         ref={swipeRef}
         renderRightActions={renderRightActions}
         overshootRight={false}
-        friction={2}
-        rightThreshold={36}
-        enableTrackpadTwoFingerGesture
+        friction={1}
+        rightThreshold={ACTION_WIDTH / 2}
+        containerStyle={styles.swipeContainer}
       >
         {children}
       </Swipeable>
@@ -93,9 +79,13 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
     marginBottom: spacing.sm,
   },
-  actions: {
-    width: 88,
-    flexDirection: "row",
+  swipeContainer: {
+    overflow: "hidden",
+    borderRadius: radius.lg,
+  },
+  actionWrap: {
+    marginLeft: spacing.xs,
+    justifyContent: "center",
   },
   deleteBtn: {
     flex: 1,
@@ -103,7 +93,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: radius.lg,
     gap: 4,
-    marginLeft: spacing.xs,
+    minHeight: 72,
   },
   deleteLabel: {
     color: "#fff",

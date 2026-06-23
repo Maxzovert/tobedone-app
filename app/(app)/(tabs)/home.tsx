@@ -12,12 +12,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { fetchHome } from "@/hooks/useAppDataWarmup";
+import { fetchHome } from "@/lib/fetchQueries";
 import { todosService } from "@/services/todos.service";
 import { tasksService } from "@/services/tasks.service";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuthStore } from "@/stores/auth-store";
-import { Avatar } from "@/components/ui/Avatar";
+import { AppHeaderActions } from "@/components/ui/AppHeaderActions";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { spacing, typography, radius, ThemeColors } from "@/constants/theme";
 import { Project, Task, Todo } from "@/types";
@@ -131,13 +131,7 @@ export default function HomeScreen() {
             </Text>
             <Text style={[styles.name, { color: theme.text }]}>{firstName}</Text>
           </View>
-          <TouchableOpacity
-            onPress={() => router.push("/(app)/profile")}
-            style={[styles.avatarBtn, { borderColor: theme.border }]}
-            activeOpacity={0.8}
-          >
-            <Avatar name={user?.name || "User"} uri={user?.avatar} size={44} />
-          </TouchableOpacity>
+          <AppHeaderActions />
         </View>
 
         <View style={styles.metrics}>
@@ -522,11 +516,6 @@ const styles = StyleSheet.create({
   headerLeft: { flex: 1 },
   greeting: { ...typography.caption, marginBottom: 2 },
   name: { fontSize: 26, fontWeight: "700", letterSpacing: -0.5 },
-  avatarBtn: {
-    borderRadius: radius.full,
-    borderWidth: 2,
-    padding: 2,
-  },
   metrics: {
     flexDirection: "row",
     gap: spacing.sm,

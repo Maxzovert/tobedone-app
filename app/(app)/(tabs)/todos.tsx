@@ -4,11 +4,12 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   TouchableOpacity,
   TextInput,
   Pressable,
   RefreshControl,
+  ActivityIndicator,
+  FlatList,
 } from "react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -24,6 +25,7 @@ import { spacing, typography, radius } from "@/constants/theme";
 import { formatDueDate } from "@/components/tasks/DueDateTimePicker";
 import { priorityColor, priorityLabel } from "@/components/tasks/PriorityPicker";
 import { SwipeToDeleteRow } from "@/components/ui/SwipeToDeleteRow";
+import { AppHeaderActions } from "@/components/ui/AppHeaderActions";
 
 export default function TodosScreen() {
   const { theme } = useTheme();
@@ -163,7 +165,10 @@ export default function TodosScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <Text style={[styles.title, { color: theme.text }]}>My Todos</Text>
+      <View style={styles.titleRow}>
+        <Text style={[styles.title, { color: theme.text }]}>My Todos</Text>
+        <AppHeaderActions />
+      </View>
 
       {adding && (
         <View style={[styles.addRow, { backgroundColor: theme.surface }]}>
@@ -184,9 +189,10 @@ export default function TodosScreen() {
       )}
 
       <FlatList
-        data={data}
+        data={data ?? []}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -196,14 +202,19 @@ export default function TodosScreen() {
           />
         }
         ListEmptyComponent={
-          !isLoading ? (
+          isLoading ? (
+            <ActivityIndicator size="large" color={theme.primary} style={styles.loader} />
+          ) : (
             <Text style={[styles.empty, { color: theme.textSecondary }]}>
               No todos yet. Tap + to add one.
             </Text>
-          ) : null
+          )
         }
-        renderItem={({ item }) =>
-          item.taskId ? (
+        renderItem={({ item }) => (
+          <SwipeToDeleteRow
+            onDelete={() => deleteMutation.mutate(item.id)}
+            dangerColor={theme.danger}
+          >
             <TodoListItem
               item={item}
               theme={theme}
@@ -225,35 +236,8 @@ export default function TodosScreen() {
                 })
               }
             />
-          ) : (
-            <SwipeToDeleteRow
-              onDelete={() => deleteMutation.mutate(item.id)}
-              dangerColor={theme.danger}
-            >
-              <TodoListItem
-                item={item}
-                theme={theme}
-                onToggle={() => toggleMutation.mutate(item)}
-                onOpen={() => item.task && setDetailTodo(item)}
-                onDelete={() => deleteMutation.mutate(item.id)}
-                onAccept={() =>
-                  setRespondTarget({
-                    taskId: item.task!.id,
-                    title: item.title,
-                    action: "accept",
-                  })
-                }
-                onReject={() =>
-                  setRespondTarget({
-                    taskId: item.task!.id,
-                    title: item.title,
-                    action: "reject",
-                  })
-                }
-              />
-            </SwipeToDeleteRow>
-          )
-        }
+          </SwipeToDeleteRow>
+        )}
       />
 
       <FAB onPress={() => setAdding(true)} />
@@ -447,7 +431,16 @@ function TodoListItem({
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  title: { ...typography.h1, padding: spacing.md },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+    gap: spacing.sm,
+  },
+  title: { ...typography.h1, flex: 1 },
   addRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -458,11 +451,11 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   addInput: { flex: 1, ...typography.body },
-  list: { padding: spacing.md, paddingBottom: 100 },
+  list: { paddingBottom: 100 },
+  loader: { marginTop: spacing.xl },
   row: {
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    marginBottom: spacing.sm,
     overflow: "hidden",
   },
   rowMain: {
