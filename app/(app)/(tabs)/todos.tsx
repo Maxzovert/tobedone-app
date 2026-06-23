@@ -21,6 +21,9 @@ import { FAB } from "@/components/ui/FAB";
 import { TaskRespondModal } from "@/components/todos/TaskRespondModal";
 import { TodoTaskDetailModal } from "@/components/todos/TodoTaskDetailModal";
 import { spacing, typography, radius } from "@/constants/theme";
+import { formatDueDate } from "@/components/tasks/DueDateTimePicker";
+import { priorityColor, priorityLabel } from "@/components/tasks/PriorityPicker";
+import { SwipeToDeleteRow } from "@/components/ui/SwipeToDeleteRow";
 
 export default function TodosScreen() {
   const { theme } = useTheme();
@@ -199,29 +202,58 @@ export default function TodosScreen() {
             </Text>
           ) : null
         }
-        renderItem={({ item }) => (
-          <TodoListItem
-            item={item}
-            theme={theme}
-            onToggle={() => toggleMutation.mutate(item)}
-            onOpen={() => item.task && setDetailTodo(item)}
-            onDelete={() => deleteMutation.mutate(item.id)}
-            onAccept={() =>
-              setRespondTarget({
-                taskId: item.task!.id,
-                title: item.title,
-                action: "accept",
-              })
-            }
-            onReject={() =>
-              setRespondTarget({
-                taskId: item.task!.id,
-                title: item.title,
-                action: "reject",
-              })
-            }
-          />
-        )}
+        renderItem={({ item }) =>
+          item.taskId ? (
+            <TodoListItem
+              item={item}
+              theme={theme}
+              onToggle={() => toggleMutation.mutate(item)}
+              onOpen={() => item.task && setDetailTodo(item)}
+              onDelete={() => deleteMutation.mutate(item.id)}
+              onAccept={() =>
+                setRespondTarget({
+                  taskId: item.task!.id,
+                  title: item.title,
+                  action: "accept",
+                })
+              }
+              onReject={() =>
+                setRespondTarget({
+                  taskId: item.task!.id,
+                  title: item.title,
+                  action: "reject",
+                })
+              }
+            />
+          ) : (
+            <SwipeToDeleteRow
+              onDelete={() => deleteMutation.mutate(item.id)}
+              dangerColor={theme.danger}
+            >
+              <TodoListItem
+                item={item}
+                theme={theme}
+                onToggle={() => toggleMutation.mutate(item)}
+                onOpen={() => item.task && setDetailTodo(item)}
+                onDelete={() => deleteMutation.mutate(item.id)}
+                onAccept={() =>
+                  setRespondTarget({
+                    taskId: item.task!.id,
+                    title: item.title,
+                    action: "accept",
+                  })
+                }
+                onReject={() =>
+                  setRespondTarget({
+                    taskId: item.task!.id,
+                    title: item.title,
+                    action: "reject",
+                  })
+                }
+              />
+            </SwipeToDeleteRow>
+          )
+        }
       />
 
       <FAB onPress={() => setAdding(true)} />
@@ -305,6 +337,8 @@ function TodoListItem({
   const contextLine = isLinked
     ? [task.projectName, task.sourceGroupName].filter(Boolean).join(" · ")
     : null;
+  const due = isLinked ? formatDueDate(task.dueDate) : null;
+  const pColor = isLinked ? priorityColor(task.priority) : theme.primary;
 
   return (
     <View
@@ -359,6 +393,17 @@ function TodoListItem({
                   <Text style={[styles.badgeText, { color: theme.accent }]}>Team</Text>
                 </View>
               )}
+              <View style={[styles.badge, { backgroundColor: pColor + "18" }]}>
+                <Text style={[styles.badgeText, { color: pColor }]}>
+                  {priorityLabel(task.priority)}
+                </Text>
+              </View>
+              {due ? (
+                <View style={[styles.badge, { backgroundColor: theme.primary + "14" }]}>
+                  <Ionicons name="time-outline" size={11} color={theme.primary} />
+                  <Text style={[styles.badgeText, { color: theme.primary }]}>{due}</Text>
+                </View>
+              ) : null}
               {isPending && (
                 <Text style={[styles.statusHint, { color: theme.warning }]}>Awaiting response</Text>
               )}

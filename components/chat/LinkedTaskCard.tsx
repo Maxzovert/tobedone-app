@@ -3,6 +3,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinkedTaskPreview } from "@/types";
 import { useTheme } from "@/hooks/useTheme";
 import { spacing, radius, typography } from "@/constants/theme";
+import { formatDueDate } from "@/components/tasks/DueDateTimePicker";
+import { priorityColor, priorityLabel } from "@/components/tasks/PriorityPicker";
 
 const STATUS_CONFIG: Record<
   string,
@@ -44,6 +46,8 @@ export function LinkedTaskCard({
   const { theme } = useTheme();
   const meta = statusMeta(task.status);
   const statusColor = theme[meta.colorKey];
+  const pColor = priorityColor(task.priority);
+  const due = formatDueDate(task.dueDate);
   const canRespond = isAssignee && task.status === "pending";
   const canComplete =
     (isAssignee || canManageStatus) && task.status === "in_progress";
@@ -87,9 +91,17 @@ export function LinkedTaskCard({
           <Ionicons name={meta.icon} size={14} color={statusColor} />
           <Text style={[styles.statusText, { color: statusColor }]}>{meta.label}</Text>
         </View>
-        <Text style={[styles.priority, { color: theme.textSecondary }]}>
-          {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} priority
-        </Text>
+        <View style={[styles.statusPill, { backgroundColor: pColor + "18" }]}>
+          <Text style={[styles.statusText, { color: pColor }]}>
+            {priorityLabel(task.priority)}
+          </Text>
+        </View>
+        {due ? (
+          <View style={[styles.statusPill, { backgroundColor: theme.primary + "14" }]}>
+            <Ionicons name="time-outline" size={12} color={theme.primary} />
+            <Text style={[styles.statusText, { color: theme.primary }]}>{due}</Text>
+          </View>
+        ) : null}
       </View>
 
       {loading && (
@@ -189,7 +201,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
   },
   statusText: { fontSize: 12, fontWeight: "600" },
-  priority: { fontSize: 12 },
   loader: { marginTop: 4 },
   actions: { flexDirection: "row", gap: spacing.sm },
   btn: {

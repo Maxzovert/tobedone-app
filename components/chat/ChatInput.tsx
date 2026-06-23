@@ -17,8 +17,10 @@ import { ProjectMember, ChatSendPayload } from "@/types";
 import { ChatAttachMenu, AttachAction } from "@/components/chat/ChatAttachMenu";
 import { MemberPickerModal } from "@/components/chat/MemberPickerModal";
 import { AssignTaskModal } from "@/components/chat/AssignTaskModal";
+import type { ChatTaskFormData } from "@/components/chat/AssignTaskModal";
 import { TaskAssignKindModal } from "@/components/projects/TaskAssignKindModal";
 import { GroupTaskTitleModal } from "@/components/chat/GroupTaskTitleModal";
+import type { GroupTaskFormData } from "@/components/chat/GroupTaskTitleModal";
 import { projectsService } from "@/services/projects.service";
 
 interface Props {
@@ -105,12 +107,14 @@ export function ChatInput({
     }
   };
 
-  const handleGroupTaskConfirm = async (taskTitle: string, description?: string) => {
+  const handleGroupTaskConfirm = async (data: GroupTaskFormData) => {
     if (!projectId) return;
     setGroupTaskLoading(true);
     const taskRes = await projectsService.createProjectTask(projectId, {
-      title: taskTitle,
-      description,
+      title: data.title,
+      description: data.description,
+      priority: data.priority,
+      dueDate: data.dueDate,
     });
     setGroupTaskLoading(false);
     if (!taskRes.success || !taskRes.data) {
@@ -119,8 +123,8 @@ export function ChatInput({
     }
     setGroupTaskOpen(false);
     const content = text.trim()
-      ? `${text.trim()}\n📋 Team task: ${taskTitle}`
-      : `📋 Team task: ${taskTitle}`;
+      ? `${text.trim()}\n📋 Team task: ${data.title}`
+      : `📋 Team task: ${data.title}`;
     onSend({
       content,
       mentionedUserIds: [...mentionedIds],
@@ -145,21 +149,23 @@ export function ChatInput({
     }
   };
 
-  const handleAssignConfirm = (taskTitle: string) => {
+  const handleAssignConfirm = (data: ChatTaskFormData) => {
     if (!assignMember || !taskGroupId) return;
     const token = mentionToken(assignMember.user.name);
     const content = text.trim()
-      ? `${text.trim()}\n📋 ${taskTitle}`
-      : `${token}📋 ${taskTitle}`;
+      ? `${text.trim()}\n📋 ${data.title}`
+      : `${token}📋 ${data.title}`;
     const mentionedUserIds = [...new Set([...mentionedIds, assignMember.user.id])];
 
     onSend({
       content,
       mentionedUserIds,
       assignTask: {
-        title: taskTitle,
+        title: data.title,
         assignedTo: assignMember.user.id,
         taskGroupId,
+        priority: data.priority,
+        dueDate: data.dueDate,
       },
     });
 

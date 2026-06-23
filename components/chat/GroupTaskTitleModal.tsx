@@ -3,14 +3,23 @@ import { Text, StyleSheet, Pressable, TextInput } from "react-native";
 import { useTheme } from "@/hooks/useTheme";
 import { Button } from "@/components/ui/Button";
 import { KeyboardBottomSheet } from "@/components/ui/KeyboardBottomSheet";
+import { PriorityPicker, TaskPriority } from "@/components/tasks/PriorityPicker";
+import { DueDateTimePicker } from "@/components/tasks/DueDateTimePicker";
 import { spacing, radius, typography } from "@/constants/theme";
+
+export type GroupTaskFormData = {
+  title: string;
+  description?: string;
+  priority: TaskPriority;
+  dueDate: string | null;
+};
 
 type Props = {
   visible: boolean;
   defaultTitle?: string;
   loading?: boolean;
   onClose: () => void;
-  onConfirm: (title: string, description?: string) => void;
+  onConfirm: (data: GroupTaskFormData) => void;
 };
 
 export function GroupTaskTitleModal({
@@ -23,11 +32,15 @@ export function GroupTaskTitleModal({
   const { theme } = useTheme();
   const [title, setTitle] = useState(defaultTitle);
   const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState<TaskPriority>("medium");
+  const [dueDate, setDueDate] = useState<Date | null>(null);
 
   useEffect(() => {
     if (visible) {
       setTitle(defaultTitle);
       setDescription("");
+      setPriority("medium");
+      setDueDate(null);
     }
   }, [visible, defaultTitle]);
 
@@ -61,11 +74,18 @@ export function GroupTaskTitleModal({
           { color: theme.text, backgroundColor: theme.background, borderColor: theme.border },
         ]}
       />
+      <PriorityPicker value={priority} onChange={setPriority} />
+      <DueDateTimePicker value={dueDate} onChange={setDueDate} />
       <Button
         title="Add to team todos"
         onPress={() => {
           if (!title.trim()) return;
-          onConfirm(title.trim(), description.trim() || undefined);
+          onConfirm({
+            title: title.trim(),
+            description: description.trim() || undefined,
+            priority,
+            dueDate: dueDate ? dueDate.toISOString() : null,
+          });
         }}
         loading={loading}
         disabled={!title.trim()}

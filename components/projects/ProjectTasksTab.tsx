@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,9 +8,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   Alert,
-  Animated,
 } from "react-native";
-import { Swipeable } from "react-native-gesture-handler";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { projectsService } from "@/services/projects.service";
@@ -22,6 +20,7 @@ import { spacing, typography, radius } from "@/constants/theme";
 import { formatDueDate } from "@/components/tasks/DueDateTimePicker";
 import { priorityColor, priorityLabel } from "@/components/tasks/PriorityPicker";
 import { TaskEditSheet } from "@/components/tasks/TaskEditSheet";
+import { SwipeToDeleteRow } from "@/components/ui/SwipeToDeleteRow";
 
 type Props = {
   projectId: string;
@@ -135,14 +134,18 @@ export function ProjectTasksTab({ projectId, active = true }: Props) {
           </View>
         }
         renderItem={({ item }) => (
-          <SwipeableTaskRow
-            task={item}
-            theme={theme}
-            onToggle={() => toggleMutation.mutate(item)}
-            onEdit={() => setEditTask(item)}
+          <SwipeToDeleteRow
             onDelete={() => confirmDelete(item)}
-            busy={toggleMutation.isPending || deleteMutation.isPending}
-          />
+            dangerColor={theme.danger}
+          >
+            <ProjectTaskRow
+              task={item}
+              theme={theme}
+              onToggle={() => toggleMutation.mutate(item)}
+              onEdit={() => setEditTask(item)}
+              busy={toggleMutation.isPending || deleteMutation.isPending}
+            />
+          </SwipeToDeleteRow>
         )}
       />
 
@@ -157,65 +160,6 @@ export function ProjectTasksTab({ projectId, active = true }: Props) {
         }}
       />
     </>
-  );
-}
-
-function SwipeableTaskRow({
-  task,
-  theme,
-  onToggle,
-  onEdit,
-  onDelete,
-  busy,
-}: {
-  task: ProjectTask;
-  theme: ReturnType<typeof useTheme>["theme"];
-  onToggle: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-  busy: boolean;
-}) {
-  const swipeRef = useRef<Swipeable>(null);
-
-  const renderRight = (
-    _progress: Animated.AnimatedInterpolation<number>,
-    dragX: Animated.AnimatedInterpolation<number>
-  ) => {
-    const scale = dragX.interpolate({
-      inputRange: [-80, 0],
-      outputRange: [1, 0.5],
-      extrapolate: "clamp",
-    });
-    return (
-      <Pressable
-        onPress={() => {
-          swipeRef.current?.close();
-          onDelete();
-        }}
-        style={[styles.deleteAction, { backgroundColor: theme.danger }]}
-      >
-        <Animated.View style={{ transform: [{ scale }] }}>
-          <Ionicons name="trash-outline" size={24} color="#fff" />
-        </Animated.View>
-      </Pressable>
-    );
-  };
-
-  return (
-    <Swipeable
-      ref={swipeRef}
-      renderRightActions={renderRight}
-      overshootRight={false}
-      friction={2}
-    >
-      <ProjectTaskRow
-        task={task}
-        theme={theme}
-        onToggle={onToggle}
-        onEdit={onEdit}
-        busy={busy}
-      />
-    </Swipeable>
   );
 }
 
@@ -272,18 +216,27 @@ function ProjectTaskRow({
             {task.description}
           </Text>
         ) : null}
+        <View style={styles.dueRow}>
+          <Ionicons
+            name="calendar-outline"
+            size={14}
+            color={due ? theme.primary : theme.textSecondary}
+          />
+          <Text
+            style={[
+              styles.dueText,
+              { color: due ? theme.text : theme.textSecondary },
+            ]}
+          >
+            {due ? `Due ${due}` : "No due date — tap to set"}
+          </Text>
+        </View>
         <View style={styles.meta}>
           <View style={[styles.badge, { backgroundColor: pColor + "18" }]}>
             <Text style={[styles.badgeText, { color: pColor }]}>
               {priorityLabel(task.priority)}
             </Text>
           </View>
-          {due ? (
-            <View style={[styles.badge, { backgroundColor: theme.primary + "14" }]}>
-              <Ionicons name="time-outline" size={11} color={theme.primary} />
-              <Text style={[styles.badgeText, { color: theme.primary }]}>{due}</Text>
-            </View>
-          ) : null}
           <View style={[styles.badge, { backgroundColor: theme.primary + "14" }]}>
             <Ionicons name="people" size={12} color={theme.primary} />
             <Text style={[styles.badgeText, { color: theme.primary }]}>Team</Text>
@@ -307,7 +260,7 @@ function ProjectTaskRow({
 
 const styles = StyleSheet.create({
   list: { flex: 1 },
-  listContent: { paddingBottom: 100, gap: spacing.sm },
+  listContent: { paddingBottom: 100, paddingTop: spacing.xs },
   listContentEmpty: { flexGrow: 1, justifyContent: "center" },
   centered: { flex: 1, justifyContent: "center", alignItems: "center", paddingTop: spacing.xl },
   empty: {
@@ -320,14 +273,6 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
   },
   emptyText: { ...typography.caption, textAlign: "center" },
-  deleteAction: {
-    width: 72,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: spacing.md,
-    borderRadius: radius.lg,
-    marginVertical: 0,
-  },
   row: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -335,11 +280,17 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: radius.lg,
     borderWidth: 1,
-    marginHorizontal: spacing.md,
   },
   body: { flex: 1, minWidth: 0 },
   taskTitle: { ...typography.body, fontWeight: "600" },
   desc: { ...typography.small, marginTop: 4 },
+  dueRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: spacing.xs,
+  },
+  dueText: { ...typography.small, fontWeight: "600", flex: 1 },
   meta: {
     flexDirection: "row",
     alignItems: "center",

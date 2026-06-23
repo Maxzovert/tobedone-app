@@ -111,6 +111,7 @@ export interface LinkedTaskPreview {
   title: string;
   status: string;
   priority: string;
+  dueDate?: string | null;
   assignedTo: string | null;
   taskGroupId: string;
   assigneeName: string | null;

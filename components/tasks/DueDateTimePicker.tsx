@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import DateTimePicker, {
   DateTimePickerEvent,
@@ -12,16 +12,22 @@ type Props = {
   onChange: (d: Date | null) => void;
 };
 
-export function formatDueDate(iso: string | null | undefined) {
-  if (!iso) return null;
-  const d = new Date(iso);
+export function formatDueDate(value: string | Date | null | undefined) {
+  if (value == null || value === "") return null;
+  const d = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(d.getTime())) return null;
   return d.toLocaleString(undefined, {
     month: "short",
     day: "numeric",
+    year: "numeric",
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+function toDatetimeLocalValue(date: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 export function DueDateTimePicker({ value, onChange }: Props) {
@@ -75,7 +81,7 @@ export function DueDateTimePicker({ value, onChange }: Props) {
         ) : null}
       </View>
 
-      {showDate && (
+      {showDate && Platform.OS !== "web" && (
         <DateTimePicker
           value={current}
           mode="date"
@@ -84,13 +90,38 @@ export function DueDateTimePicker({ value, onChange }: Props) {
           minimumDate={new Date()}
         />
       )}
-      {showTime && (
+      {showTime && Platform.OS !== "web" && (
         <DateTimePicker
           value={current}
           mode="time"
           display={Platform.OS === "ios" ? "spinner" : "default"}
           onChange={onTimeChange}
         />
+      )}
+
+      {Platform.OS === "web" && showDate && (
+        <View style={styles.webPickerWrap}>
+          <input
+            type="datetime-local"
+            value={value ? toDatetimeLocalValue(value) : toDatetimeLocalValue(current)}
+            min={toDatetimeLocalValue(new Date())}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              if (!e.target.value) return;
+              const picked = new Date(e.target.value);
+              if (!Number.isNaN(picked.getTime())) onChange(picked);
+              setShowDate(false);
+            }}
+            style={{
+              width: "100%",
+              padding: 12,
+              fontSize: 16,
+              borderRadius: 8,
+              border: `1px solid ${theme.border}`,
+              backgroundColor: theme.surface,
+              color: theme.text,
+            }}
+          />
+        </View>
       )}
     </View>
   );
@@ -119,5 +150,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
+  },
+  webPickerWrap: {
+    marginTop: spacing.sm,
   },
 });
