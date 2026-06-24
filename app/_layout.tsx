@@ -16,6 +16,7 @@ import { useAppDataWarmup } from "@/hooks/useAppDataWarmup";
 import { UrgentAlarmHost } from "@/hooks/useUrgentTaskAlarm";
 import { useTaskLocalReminders } from "@/hooks/useTaskLocalReminders";
 import { useTheme } from "@/hooks/useTheme";
+import { getDeletedNotificationIds } from "@/lib/deletedNotifications";
 import { AppBootSplash } from "@/components/ui/AppBootSplash";
 
 SplashScreen.preventAutoHideAsync();
@@ -36,6 +37,12 @@ function RootNav() {
   useEffect(() => {
     void hydrate();
   }, [hydrate]);
+
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      void getDeletedNotificationIds();
+    }
+  }, [isAuthenticated, isLoading]);
 
   useEffect(() => {
     if (!isLoading) {

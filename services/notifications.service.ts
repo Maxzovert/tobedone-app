@@ -1,20 +1,41 @@
-import { api } from "@/lib/api";
+import { api, ApiResult } from "@/lib/api";
 import { Notification } from "@/types";
 
+async function runDeleteAttempts<T>(
+  attempts: Array<() => Promise<ApiResult<T>>>
+): Promise<ApiResult<T>> {
+  const errors: string[] = [];
+
+  for (const attempt of attempts) {
+    const res = await attempt();
+    if (res.success) return res;
+    if (res.error) errors.push(res.error);
+    else if (res.httpStatus) errors.push(`HTTP ${res.httpStatus}`);
+  }
+
+  return {
+    success: false,
+    httpStatus: 0,
+    error:
+      errors[0] ??
+      "Could not delete alerts. Pull to refresh, then try again.",
+  };
+}
+
 async function deleteNotification(id: string) {
-  const post = await api.postEmpty<{ deleted: boolean; id: string }>(
-    `/notifications/${id}/remove`
-  );
-  if (post.success) return post;
-  return api.delete<{ deleted: boolean; id: string }>(`/notifications/${id}`);
+  return runDeleteAttempts([
+    () => api.patch<{ deleted: boolean; id: string }>("/notifications/delete", { id }),
+    () => api.postEmpty<{ deleted: boolean; id: string }>(`/notifications/${id}/remove`),
+    () => api.delete<{ deleted: boolean; id: string }>(`/notifications/${id}`),
+  ]);
 }
 
 async function deleteAllNotifications() {
-  const post = await api.postEmpty<{ deleted: boolean }>(
-    "/notifications/clear-all"
-  );
-  if (post.success) return post;
-  return api.delete<{ deleted: boolean }>("/notifications/all");
+  return runDeleteAttempts([
+    () => api.patch<{ deleted: boolean }>("/notifications/clear-all", {}),
+    () => api.postEmpty<{ deleted: boolean }>("/notifications/clear-all"),
+    () => api.delete<{ deleted: boolean }>("/notifications/all"),
+  ]);
 }
 
 export const notificationsService = {

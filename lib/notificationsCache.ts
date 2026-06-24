@@ -1,5 +1,9 @@
 import { QueryClient } from "@tanstack/react-query";
 import { Notification } from "@/types";
+import {
+  filterTombstonedNotifications,
+  getDeletedNotificationIdsSync,
+} from "@/lib/deletedNotifications";
 
 export const NOTIFICATIONS_QUERY_KEY = ["notifications"] as const;
 
@@ -12,7 +16,13 @@ function countUnread(items: Notification[]) {
   return items.filter((n) => !n.read).length;
 }
 
+function applyTombstones(items: Notification[]) {
+  return filterTombstonedNotifications(items);
+}
+
 export function mergeNotificationIntoCache(qc: QueryClient, item: Notification) {
+  if (getDeletedNotificationIdsSync().has(item.id)) return;
+
   qc.setQueryData<NotificationsData>(NOTIFICATIONS_QUERY_KEY, (prev) => {
     if (!prev) {
       const notifications = [item];
@@ -56,6 +66,17 @@ export function removeNotificationFromCache(qc: QueryClient, id: string) {
     const notifications = prev.notifications.filter((n) => n.id !== id);
     if (notifications.length === prev.notifications.length) return prev;
     return { notifications, unreadCount: countUnread(notifications) };
+  });
+}
+
+export function setNotificationsInCache(
+  qc: QueryClient,
+  notifications: Notification[]
+) {
+  const filtered = applyTombstones(notifications);
+  qc.setQueryData<NotificationsData>(NOTIFICATIONS_QUERY_KEY, {
+    notifications: filtered,
+    unreadCount: countUnread(filtered),
   });
 }
 

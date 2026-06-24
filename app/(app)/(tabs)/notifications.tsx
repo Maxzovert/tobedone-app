@@ -16,6 +16,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 
 import { notificationsService } from "@/services/notifications.service";
+import { loadToken } from "@/lib/api";
 import { requireApiSuccess } from "@/lib/requireApiSuccess";
 import { useTheme } from "@/hooks/useTheme";
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
@@ -33,6 +34,10 @@ import {
   NotificationsData,
   removeNotificationFromCache,
 } from "@/lib/notificationsCache";
+import {
+  clearNotificationTombstones,
+  tombstoneNotification,
+} from "@/lib/deletedNotifications";
 import { openNotificationTarget } from "@/lib/openNotificationTarget";
 
 export default function NotificationsScreen() {
@@ -60,40 +65,61 @@ export default function NotificationsScreen() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) =>
-      requireApiSuccess(notificationsService.delete(id)),
+    mutationFn: async (id: string) => {
+      await loadToken();
+      try {
+        return await requireApiSuccess(notificationsService.delete(id));
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "";
+        if (message.toLowerCase().includes("not found")) {
+          return { deleted: true, id };
+        }
+        throw err;
+      }
+    },
     onMutate: async (id) => {
       await qc.cancelQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
       const prev = qc.getQueryData<NotificationsData>(NOTIFICATIONS_QUERY_KEY);
       removeNotificationFromCache(qc, id);
+      await tombstoneNotification(id);
       return { prev };
     },
-    onError: (err, _id, ctx) => {
-      if (ctx?.prev) {
-        qc.setQueryData(NOTIFICATIONS_QUERY_KEY, ctx.prev);
-      }
+    onSuccess: async (_, id) => {
+      await tombstoneNotification(id);
+    },
+    onError: (err, id) => {
       Alert.alert(
-        "Could not delete",
-        err instanceof Error ? err.message : "Try again after the server is updated."
+        "Could not delete on server",
+        err instanceof Error
+          ? `${err.message}\n\nThis alert stays hidden on your device.`
+          : "This alert stays hidden on your device."
       );
     },
   });
 
   const deleteAllMutation = useMutation({
-    mutationFn: () => requireApiSuccess(notificationsService.deleteAll()),
+    mutationFn: async () => {
+      await loadToken();
+      return requireApiSuccess(notificationsService.deleteAll());
+    },
     onMutate: async () => {
       await qc.cancelQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
       const prev = qc.getQueryData<NotificationsData>(NOTIFICATIONS_QUERY_KEY);
+      for (const item of prev?.notifications ?? []) {
+        await tombstoneNotification(item.id);
+      }
       clearNotificationsCache(qc);
       return { prev };
     },
-    onError: (err, _vars, ctx) => {
-      if (ctx?.prev) {
-        qc.setQueryData(NOTIFICATIONS_QUERY_KEY, ctx.prev);
-      }
+    onSuccess: async () => {
+      await clearNotificationTombstones();
+    },
+    onError: (err) => {
       Alert.alert(
-        "Could not clear alerts",
-        err instanceof Error ? err.message : "Try again after the server is updated."
+        "Could not clear on server",
+        err instanceof Error
+          ? `${err.message}\n\nAlerts are hidden on this device. They will stay cleared after you reload.`
+          : "Alerts are hidden on this device."
       );
     },
   });
