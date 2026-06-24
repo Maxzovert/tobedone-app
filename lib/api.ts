@@ -26,8 +26,12 @@ async function request<T>(
   options: RequestOptions = {}
 ): Promise<ApiResult<T>> {
   const { timeoutMs, ...fetchOptions } = options;
+  const method = (fetchOptions.method ?? "GET").toUpperCase();
+  const hasBody = fetchOptions.body != null && fetchOptions.body !== "";
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(hasBody || method === "POST" || method === "PATCH" || method === "PUT"
+      ? { "Content-Type": "application/json" }
+      : {}),
     ...(fetchOptions.headers as Record<string, string>),
   };
 
@@ -48,10 +52,13 @@ async function request<T>(
       signal: controller?.signal,
     });
 
-    let json: ApiResponse<T>;
+    let json: ApiResponse<T> | null = null;
     try {
       const text = await res.text();
       if (!text) {
+        if (res.ok) {
+          return { success: true, httpStatus: res.status };
+        }
         return {
           success: false,
           httpStatus: res.status,
@@ -72,14 +79,27 @@ async function request<T>(
             : `Invalid server response (${res.status}).`,
       };
     }
-    if (!res.ok && json.success !== false && !json.error) {
+
+    if (res.ok) {
+      if (json.success === false) {
+        return {
+          success: false,
+          error: json.error ?? `Request failed (${res.status})`,
+          httpStatus: res.status,
+        };
+      }
       return {
-        success: false,
+        success: true,
+        data: json.data !== undefined ? json.data : (json as unknown as T),
         httpStatus: res.status,
-        error: json.error || `Request failed (${res.status})`,
       };
     }
-    return { ...json, httpStatus: res.status };
+
+    return {
+      success: false,
+      error: json.error ?? `Request failed (${res.status})`,
+      httpStatus: res.status,
+    };
   } catch (err) {
     if (err instanceof Error && err.name === "AbortError") {
       return {
@@ -105,6 +125,9 @@ export const api = {
   patch: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: "PATCH", body: JSON.stringify(body) }),
   delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
+  /** POST fallback when DELETE is blocked by a proxy or device network stack. */
+  postEmpty: <T>(path: string) =>
+    request<T>(path, { method: "POST", body: JSON.stringify({}) }),
   upload: async (
     uri: string,
     name: string,

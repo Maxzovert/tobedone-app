@@ -4,57 +4,36 @@ import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
-
   View,
-
   Text,
-
   StyleSheet,
-
   TouchableOpacity,
-
   Alert,
-
   Pressable,
-
   FlatList,
-
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
 
 import { notificationsService } from "@/services/notifications.service";
-
+import { requireApiSuccess } from "@/lib/requireApiSuccess";
 import { useTheme } from "@/hooks/useTheme";
-
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
-
 import { useNotificationsQuery } from "@/hooks/useNotificationsQuery";
-
 import { useNotificationsTabPresence } from "@/hooks/usePushNotifications";
-
 import { GlassCard } from "@/components/ui/GlassCard";
-
 import { SwipeToDeleteRow } from "@/components/ui/SwipeToDeleteRow";
-
 import { Notification } from "@/types";
-
 import { spacing, typography, radius } from "@/constants/theme";
-
 import {
-
   clearNotificationsCache,
-
   markAllReadInCache,
-
   markReadInCache,
-
+  NOTIFICATIONS_QUERY_KEY,
+  NotificationsData,
   removeNotificationFromCache,
-
 } from "@/lib/notificationsCache";
 import { openNotificationTarget } from "@/lib/openNotificationTarget";
-
-
 
 export default function NotificationsScreen() {
   const { theme } = useTheme();
@@ -63,54 +42,60 @@ export default function NotificationsScreen() {
 
   useNotificationsTabPresence();
 
-
-
   const { data, refetch, isRefetching } = useNotificationsQuery();
 
   const notifications = data?.notifications ?? [];
 
-
-
   useRefreshOnFocus(refetch);
 
-
-
   const markReadMutation = useMutation({
-
-    mutationFn: (id: string) => notificationsService.markRead(id),
-
+    mutationFn: (id: string) =>
+      requireApiSuccess(notificationsService.markRead(id)),
     onSuccess: (_, id) => markReadInCache(qc, id),
-
   });
-
-
 
   const markAllMutation = useMutation({
-
-    mutationFn: () => notificationsService.markAllRead(),
-
+    mutationFn: () => requireApiSuccess(notificationsService.markAllRead()),
     onSuccess: () => markAllReadInCache(qc),
-
   });
-
-
 
   const deleteMutation = useMutation({
-
-    mutationFn: (id: string) => notificationsService.delete(id),
-
-    onSuccess: (_, id) => removeNotificationFromCache(qc, id),
-
+    mutationFn: (id: string) =>
+      requireApiSuccess(notificationsService.delete(id)),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
+      const prev = qc.getQueryData<NotificationsData>(NOTIFICATIONS_QUERY_KEY);
+      removeNotificationFromCache(qc, id);
+      return { prev };
+    },
+    onError: (err, _id, ctx) => {
+      if (ctx?.prev) {
+        qc.setQueryData(NOTIFICATIONS_QUERY_KEY, ctx.prev);
+      }
+      Alert.alert(
+        "Could not delete",
+        err instanceof Error ? err.message : "Try again after the server is updated."
+      );
+    },
   });
 
-
-
   const deleteAllMutation = useMutation({
-
-    mutationFn: () => notificationsService.deleteAll(),
-
-    onSuccess: () => clearNotificationsCache(qc),
-
+    mutationFn: () => requireApiSuccess(notificationsService.deleteAll()),
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
+      const prev = qc.getQueryData<NotificationsData>(NOTIFICATIONS_QUERY_KEY);
+      clearNotificationsCache(qc);
+      return { prev };
+    },
+    onError: (err, _vars, ctx) => {
+      if (ctx?.prev) {
+        qc.setQueryData(NOTIFICATIONS_QUERY_KEY, ctx.prev);
+      }
+      Alert.alert(
+        "Could not clear alerts",
+        err instanceof Error ? err.message : "Try again after the server is updated."
+      );
+    },
   });
 
 

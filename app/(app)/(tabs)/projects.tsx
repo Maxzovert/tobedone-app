@@ -17,6 +17,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuthStore } from "@/stores/auth-store";
 import { ProjectListItem } from "@/components/projects/ProjectListItem";
 import { AppHeaderActions } from "@/components/ui/AppHeaderActions";
+import { ExpandableFAB, FABMenuItem } from "@/components/ui/ExpandableFAB";
 import { IconPicker, DEFAULT_PROJECT_ICON } from "@/components/projects/IconPicker";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -103,34 +104,33 @@ export default function ProjectsScreen() {
     setModal("join");
   };
 
+  const fabItems: FABMenuItem[] = [
+    {
+      id: "new_project",
+      label: "New project",
+      icon: "add",
+      accent: theme.primary,
+      onPress: openCreate,
+    },
+    {
+      id: "join_project",
+      label: "Join project",
+      icon: "enter-outline",
+      accent: theme.accent,
+      onPress: openJoin,
+    },
+  ];
+
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: theme.background }]}>
-      <View style={styles.topBar}>
-        <AppHeaderActions />
-      </View>
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerLeft}>
           <Text style={[styles.title, { color: theme.text }]}>Projects</Text>
           <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
             {data?.length ?? 0} workspace{(data?.length ?? 0) === 1 ? "" : "s"}
           </Text>
         </View>
-        <View style={styles.headerActions}>
-          <Pressable
-            onPress={openJoin}
-            style={[styles.headerBtn, { backgroundColor: theme.surface, borderColor: theme.border }]}
-          >
-            <Ionicons name="enter-outline" size={20} color={theme.primary} />
-            <Text style={[styles.headerBtnText, { color: theme.primary }]}>Join</Text>
-          </Pressable>
-          <Pressable
-            onPress={openCreate}
-            style={[styles.headerBtn, styles.headerBtnPrimary, { backgroundColor: theme.primary }]}
-          >
-            <Ionicons name="add" size={22} color={theme.onPrimary} />
-            <Text style={[styles.headerBtnText, { color: theme.onPrimary }]}>New</Text>
-          </Pressable>
-        </View>
+        <AppHeaderActions />
       </View>
 
       {showListSkeleton ? (
@@ -267,18 +267,14 @@ export default function ProjectsScreen() {
           onClose={() => setCreatedProject(null)}
         />
       )}
+
+      <ExpandableFAB items={fabItems} />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  topBar: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -286,21 +282,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
+    gap: spacing.sm,
   },
+  headerLeft: { flex: 1, minWidth: 0 },
   title: { fontSize: 28, fontWeight: "700", letterSpacing: -0.5 },
   subtitle: { ...typography.caption, marginTop: 2 },
-  headerActions: { flexDirection: "row", gap: spacing.sm },
-  headerBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: spacing.sm + 2,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.md,
-    borderWidth: 1,
-  },
-  headerBtnPrimary: { borderWidth: 0 },
-  headerBtnText: { fontSize: 14, fontWeight: "600" },
   loading: { paddingHorizontal: spacing.md },
   list: { paddingHorizontal: spacing.md, paddingBottom: 100 },
   empty: {
